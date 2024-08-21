@@ -103,7 +103,6 @@ func TestIfElseExpressions(t *testing.T) {
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
 		integer, ok := tt.expected.(int)
-
 		if ok {
 			testIntegerObject(t, evaluated, int64(integer))
 		} else {
@@ -121,6 +120,7 @@ func TestReturnStatements(t *testing.T) {
 		{"return 10; 9;", 10},
 		{"return 2 * 5; 9;", 10},
 		{"9; return 2 * 5; 9;", 10},
+		{"if (10 > 1) { return 10; }", 10},
 		{
 			`
 			if (10 > 1) {
@@ -181,8 +181,16 @@ func TestErrorHandling(t *testing.T) {
 			"unknown operator: BOOLEAN + BOOLEAN",
 		},
 		{
+			"true + false + true + false;",
+			"unknown operator: BOOLEAN + BOOLEAN",
+		},
+		{
 			"5; true + false; 5",
 			"unknown operator: BOOLEAN + BOOLEAN",
+		},
+		{
+			`"Hello" - "World"`,
+			"unknown operator: STRING - STRING",
 		},
 		{
 			"if (10 > 1) { true + false; }",
@@ -211,12 +219,16 @@ func TestErrorHandling(t *testing.T) {
 			`{"name": "Monkey"}[fn(x) { x }];`,
 			"unusable as hash key: FUNCTION",
 		},
+		{
+			`999[1]`,
+			"index operator not supported: INTEGER",
+		},
 	}
 
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
-		errObj, ok := evaluated.(*object.Error)
 
+		errObj, ok := evaluated.(*object.Error)
 		if !ok {
 			t.Errorf("no error object returned. got=%T(%+v)",
 				evaluated, evaluated)
@@ -256,7 +268,8 @@ func TestFunctionObject(t *testing.T) {
 	}
 
 	if len(fn.Parameters) != 1 {
-		t.Fatalf("function has wrong parameters. Parameters=%+v", fn.Parameters)
+		t.Fatalf("function has wrong parameters. Parameters=%+v",
+			fn.Parameters)
 	}
 
 	if fn.Parameters[0].String() != "x" {
@@ -288,21 +301,40 @@ func TestFunctionApplication(t *testing.T) {
 	}
 }
 
+func TestEnclosingEnvironments(t *testing.T) {
+	input := `
+		let first = 10;
+		let second = 10;
+		let third = 10;
+
+		let ourFunction = fn(first) {
+  			let second = 20;
+
+  			first + second + third;
+		};
+
+		ourFunction(20) + first + second;`
+
+	testIntegerObject(t, testEval(input), 70)
+}
+
 func TestClosures(t *testing.T) {
 	input := `
 		let newAdder = fn(x) {
-		fn(y) { x + y };
+  			fn(y) { x + y };
 		};
+
 		let addTwo = newAdder(2);
 		addTwo(2);`
+
 	testIntegerObject(t, testEval(input), 4)
 }
 
 func TestStringLiteral(t *testing.T) {
 	input := `"Hello World!"`
+
 	evaluated := testEval(input)
 	str, ok := evaluated.(*object.String)
-
 	if !ok {
 		t.Fatalf("object is not String. got=%T (%+v)", evaluated, evaluated)
 	}
@@ -314,9 +346,9 @@ func TestStringLiteral(t *testing.T) {
 
 func TestStringConcatenation(t *testing.T) {
 	input := `"Hello" + " " + "World!"`
+
 	evaluated := testEval(input)
 	str, ok := evaluated.(*object.String)
-
 	if !ok {
 		t.Fatalf("object is not String. got=%T (%+v)", evaluated, evaluated)
 	}
@@ -338,6 +370,7 @@ func TestBuiltinFunctions(t *testing.T) {
 		{`len("one", "two")`, "wrong number of arguments. got=2, want=1"},
 		{`len([1, 2, 3])`, 3},
 		{`len([])`, 0},
+		{`puts("hello", "world!")`, nil},
 		{`first([1, 2, 3])`, 1},
 		{`first([])`, nil},
 		{`first(1)`, "argument to `first` must be ARRAY, got INTEGER"},
@@ -391,9 +424,9 @@ func TestBuiltinFunctions(t *testing.T) {
 
 func TestArrayLiterals(t *testing.T) {
 	input := "[1, 2 * 2, 3 + 3]"
+
 	evaluated := testEval(input)
 	result, ok := evaluated.(*object.Array)
-
 	if !ok {
 		t.Fatalf("object is not Array. got=%T (%+v)", evaluated, evaluated)
 	}
@@ -454,10 +487,10 @@ func TestArrayIndexExpressions(t *testing.T) {
 			nil,
 		},
 	}
+
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
 		integer, ok := tt.expected.(int)
-
 		if ok {
 			testIntegerObject(t, evaluated, int64(integer))
 		} else {
@@ -469,16 +502,16 @@ func TestArrayIndexExpressions(t *testing.T) {
 func TestHashLiterals(t *testing.T) {
 	input := `let two = "two";
 	{
-	"one": 10 - 9,
-	two: 1 + 1,
-	"thr" + "ee": 6 / 2,
-	4: 4,
-	true: 5,
-	false: 6
+		"one": 10 - 9,
+		two: 1 + 1,
+		"thr" + "ee": 6 / 2,
+		4: 4,
+		true: 5,
+		false: 6
 	}`
+
 	evaluated := testEval(input)
 	result, ok := evaluated.(*object.Hash)
-
 	if !ok {
 		t.Fatalf("Eval didn't return Hash. got=%T (%+v)", evaluated, evaluated)
 	}
@@ -498,7 +531,6 @@ func TestHashLiterals(t *testing.T) {
 
 	for expectedKey, expectedValue := range expected {
 		pair, ok := result.Pairs[expectedKey]
-
 		if !ok {
 			t.Errorf("no pair for given key in Pairs")
 		}
@@ -541,10 +573,10 @@ func TestHashIndexExpressions(t *testing.T) {
 			5,
 		},
 	}
+
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
 		integer, ok := tt.expected.(int)
-
 		if ok {
 			testIntegerObject(t, evaluated, int64(integer))
 		} else {
@@ -552,7 +584,6 @@ func TestHashIndexExpressions(t *testing.T) {
 		}
 	}
 }
-
 func testEval(input string) object.Object {
 	l := lexer.New(input)
 	p := parser.New(l)
@@ -564,13 +595,13 @@ func testEval(input string) object.Object {
 
 func testIntegerObject(t *testing.T, obj object.Object, expected int64) bool {
 	result, ok := obj.(*object.Integer)
-
 	if !ok {
 		t.Errorf("object is not Integer. got=%T (%+v)", obj, obj)
 		return false
 	}
 	if result.Value != expected {
-		t.Errorf("object has wrong value. got=%d, want=%d", result.Value, expected)
+		t.Errorf("object has wrong value. got=%d, want=%d",
+			result.Value, expected)
 		return false
 	}
 
@@ -579,18 +610,15 @@ func testIntegerObject(t *testing.T, obj object.Object, expected int64) bool {
 
 func testBooleanObject(t *testing.T, obj object.Object, expected bool) bool {
 	result, ok := obj.(*object.Boolean)
-
 	if !ok {
 		t.Errorf("object is not Boolean. got=%T (%+v)", obj, obj)
 		return false
 	}
 	if result.Value != expected {
 		t.Errorf("object has wrong value. got=%t, want=%t",
-
 			result.Value, expected)
 		return false
 	}
-
 	return true
 }
 
