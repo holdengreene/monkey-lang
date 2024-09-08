@@ -11,6 +11,9 @@ import {
 import type { Lexer } from "../lexer/Lexer.js";
 import { tokenItem, TokenType, type Token } from "../token/token.js";
 
+type PrefixFn = () => Expression;
+type InfixFn = (arg: Expression) => Expression
+
 enum Operators {
     LOWEST,
     EQUALS,
@@ -41,8 +44,8 @@ export class Parser {
     private errors: string[] = [];
     private curToken!: Token;
     private peekToken!: Token;
-    private prefixParseFns = new Map<TokenType, Expression>();
-    private infixParseFns = new Map<TokenType, Expression>();
+    private prefixParseFns = new Map<TokenType, PrefixFn>();
+    private infixParseFns = new Map<TokenType, InfixFn>();
 
     constructor(private lexer: Lexer) {
         this.registerPrefix(tokenItem.IDENT, this.parseIdentifier);
@@ -76,25 +79,25 @@ export class Parser {
         return this.errors;
     }
 
-    private nextToken() {
+    private nextToken(): void {
         this.curToken = this.peekToken;
         this.peekToken = this.lexer.nextToken();
     }
 
-    private parseStatement(): Statement {
+    private parseStatement(): Statement | undefined {
         switch (this.curToken.type) {
             case tokenItem.LET:
                 return this.parseLetStatement();
         }
     }
 
-    private parseLetStatement(): LetStatement | null {
+    private parseLetStatement(): Statement | undefined {
         let stmt = new LetStatement({
             token: this.curToken,
         });
 
         if (!this.expectPeek(tokenItem.IDENT)) {
-            return null;
+            return undefined;
         }
 
         stmt.name = new Identifier({
@@ -103,7 +106,7 @@ export class Parser {
         });
 
         if (!this.expectPeek(tokenItem.ASSIGN)) {
-            return null;
+            return undefined;
         }
 
         this.nextToken();
@@ -117,12 +120,12 @@ export class Parser {
         return stmt;
     }
 
-    private parseExpression(precedence: Operators): Expression | null {
+    private parseExpression(precedence: Operators): Expression | undefined {
         const prefix = this.prefixParseFns.get(this.curToken.type);
 
         if (!prefix) {
             this.noPrefixParseFnError(this.curToken.type);
-            return null;
+            return undefined;
         }
 
         let leftExp = prefix();
@@ -152,7 +155,7 @@ export class Parser {
         });
     };
 
-    private parseIntegerLiteral = (): Expression => {
+    private parseIntegerLiteral = (): IntegerLiteral => {
         const lit = new IntegerLiteral({ token: this.curToken });
 
         const value = parseInt(this.curToken.literal);
@@ -166,7 +169,7 @@ export class Parser {
         return lit;
     };
 
-    private parseBoolean = (): Expression => {
+    private parseBoolean = (): BooleanLiteral => {
         return new BooleanLiteral({
             token: this.curToken,
             value: this.curTokenIs(tokenItem.TRUE),
@@ -187,11 +190,11 @@ export class Parser {
         return exp;
     }
 
-    private registerPrefix(tokenType: TokenType, fn: any) {
+    private registerPrefix(tokenType: TokenType, fn: PrefixFn): void {
         this.prefixParseFns.set(tokenType, fn);
     }
 
-    private registerInfix(tokenType: TokenType, fn: any) {
+    private registerInfix(tokenType: TokenType, fn: InfixFn): void {
         this.infixParseFns.set(tokenType, fn);
     }
 
@@ -229,7 +232,7 @@ export class Parser {
         return this.peekToken.type === token;
     }
 
-    private noPrefixParseFnError(token: TokenType) {
+    private noPrefixParseFnError(token: TokenType): void {
         const msg = `no prefix parse function for ${token} found`;
         this.errors.push(msg);
     }

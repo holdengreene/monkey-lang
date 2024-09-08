@@ -6,9 +6,11 @@ type ASTNode = {
 };
 
 type TokVal = {
-    token: Token;
-    value: string;
+    token?: Token;
+    value?: Value;
 };
+
+type Value = string | number | boolean;
 
 export type ProgramStatement = Record<string, any>;
 export class Program implements ASTNode {
@@ -35,15 +37,15 @@ export class Program implements ASTNode {
 
 type ExpressionNode = {
     token?: Token;
-    value?: string | number | boolean;
+    value?: Value;
 };
 export class Expression implements ASTNode {
     public token?: Token;
-    public value?: string | number | boolean;
+    public value?: Value;
 
-    constructor(expressionNode: ExpressionNode) {
-        this.token = expressionNode.token;
-        this.value = expressionNode.value;
+    constructor(expressionNode?: ExpressionNode) {
+        this.token = expressionNode?.token;
+        this.value = expressionNode?.value;
     }
 
     public tokenLiteral(): string {
@@ -56,12 +58,12 @@ export class Expression implements ASTNode {
 }
 
 type StatementNode = {
-    token: Token;
-    value: string;
+    token?: Token;
+    value?: string | Expression;
 };
 export class Statement implements ASTNode {
-    public token: Token;
-    public value: string;
+    public token?: Token;
+    public value?: string | Expression;
 
     constructor(statementNode: StatementNode) {
         this.token = statementNode.token;
@@ -69,26 +71,24 @@ export class Statement implements ASTNode {
     }
 
     public tokenLiteral(): string {
-        return this.token.literal;
+        return this.token?.literal ?? "";
     }
 
     public string(): string {
-        return this.value;
+        return `${this.value}`;
     }
 }
 
 type LetStatementNode = {
-    token: Token;
+    token?: Token;
     name?: TokVal;
     value?: TokVal;
 };
-export class LetStatement implements ASTNode {
+export class LetStatement extends Statement {
     public name?: Identifier;
-    public value?: Expression;
-    public token: Token;
 
     constructor(statementNode: LetStatementNode) {
-        this.token = statementNode.token;
+        super({ token: statementNode.token });
         if (statementNode.name) {
             this.name = new Identifier(statementNode.name);
         }
@@ -96,10 +96,6 @@ export class LetStatement implements ASTNode {
         if (statementNode.value) {
             this.value = new Expression(statementNode.value);
         }
-    }
-
-    public tokenLiteral(): string {
-        return this.token.literal;
     }
 
     public string(): string {
@@ -113,7 +109,7 @@ export class LetStatement implements ASTNode {
         out.push(this.name.string());
         out.push(" = ");
 
-        if (this.value) {
+        if (this.value && typeof this.value !== "string") {
             out.push(this.value.string());
         }
 
@@ -124,42 +120,30 @@ export class LetStatement implements ASTNode {
 }
 
 type IdentifierExpressionNode = {
-    token: Token;
-    value: string;
+    token?: Token;
+    value?: Value;
 };
-export class Identifier implements ASTNode {
-    public token: Token;
-    public value: string;
-
+export class Identifier extends Expression {
     constructor(expressionNode: IdentifierExpressionNode) {
-        this.token = expressionNode.token;
-        this.value = expressionNode.value;
-    }
-
-    public tokenLiteral(): string {
-        return this.token.literal;
-    }
-
-    public string(): string {
-        return this.value;
+        super(expressionNode);
     }
 }
 
 type InfixExpressionNode = {
-    token: Token;
-    left: TokVal;
-    operator: string;
+    token?: Token;
+    left?: TokVal;
+    operator?: string;
     right?: TokVal;
 };
 
-export class InfixExpression implements ASTNode {
-    public token: Token;
-    public left: Expression;
-    public operator: string;
+export class InfixExpression extends Expression {
+    public left?: Expression;
+    public operator?: string;
     public right?: Expression;
 
     constructor(infixExpressionNode: InfixExpressionNode) {
-        this.token = infixExpressionNode.token;
+        super({ token: infixExpressionNode.token });
+
         this.left = new Expression(infixExpressionNode.left);
         this.operator = infixExpressionNode.operator;
         if (infixExpressionNode.right) {
@@ -167,15 +151,13 @@ export class InfixExpression implements ASTNode {
         }
     }
 
-    public tokenLiteral(): string {
-        return this.token.literal;
-    }
-
     public string(): string {
         const out: string[] = [];
 
         out.push("(");
-        out.push(this.left.string());
+        if (this.left) {
+            out.push(this.left.string());
+        }
         out.push(` ${this.operator} `);
         if (this.right) {
             out.push(this.right.string());
@@ -189,17 +171,16 @@ export class InfixExpression implements ASTNode {
 type IntegerLiteralNode = {
     token?: Token;
     value?: number;
-}
+};
 export class IntegerLiteral extends Expression {
     constructor(integerLiteralNode: IntegerLiteralNode) {
         super(integerLiteralNode);
     }
 }
 
-
 type StringLiteralNode = {
-    token: Token;
-    value: string;
+    token?: Token;
+    value?: string;
 };
 export class StringLiteral extends Expression {
     constructor(stringLiteralNode: StringLiteralNode) {
@@ -209,8 +190,8 @@ export class StringLiteral extends Expression {
 
 type BooleanNode = {
     token?: Token;
-    value: boolean;
-}
+    value?: boolean;
+};
 export class BooleanLiteral extends Expression {
     constructor(booleanNode: BooleanNode) {
         super(booleanNode);
