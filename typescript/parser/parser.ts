@@ -6,13 +6,14 @@ import {
     IntegerLiteral,
     LetStatement,
     Program,
+    ReturnStatement,
     Statement,
 } from "../ast/ast.js";
 import type { Lexer } from "../lexer/Lexer.js";
 import { tokenItem, TokenType, type Token } from "../token/token.js";
 
 type PrefixFn = () => Expression;
-type InfixFn = (arg: Expression) => Expression
+type InfixFn = (arg: Expression) => Expression;
 
 enum Operators {
     LOWEST,
@@ -88,10 +89,12 @@ export class Parser {
         switch (this.curToken.type) {
             case tokenItem.LET:
                 return this.parseLetStatement();
+            case tokenItem.RETURN:
+                return this.parseReturnStatement();
         }
     }
 
-    private parseLetStatement(): Statement | undefined {
+    private parseLetStatement(): LetStatement | undefined {
         let stmt = new LetStatement({
             token: this.curToken,
         });
@@ -112,6 +115,20 @@ export class Parser {
         this.nextToken();
 
         stmt.value = this.parseExpression(Operators.LOWEST);
+
+        if (this.peekTokenIs(tokenItem.SEMICOLON)) {
+            this.nextToken();
+        }
+
+        return stmt;
+    }
+
+    private parseReturnStatement(): ReturnStatement {
+        let stmt = new ReturnStatement({ token: this.curToken });
+
+        this.nextToken();
+
+        stmt.returnValue = this.parseExpression(Operators.LOWEST);
 
         if (this.peekTokenIs(tokenItem.SEMICOLON)) {
             this.nextToken();

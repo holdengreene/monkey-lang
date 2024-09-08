@@ -1,5 +1,13 @@
 import { expect, it } from "vitest";
-import { Expression, Identifier, ProgramStatement } from "../ast/ast.js";
+import {
+    BooleanLiteral,
+    Expression,
+    Identifier,
+    IntegerLiteral,
+    LetStatement,
+    ProgramStatement,
+    ReturnStatement,
+} from "../ast/ast.js";
 import { Lexer } from "../lexer/Lexer.js";
 import { Parser } from "./parser.js";
 
@@ -19,11 +27,7 @@ it("should parse let statements", () => {
     ];
 
     for (const test of tests) {
-        const lexer = new Lexer(test.input);
-        const parser = new Parser(lexer);
-        const program = parser.parseProgram();
-
-        checkParserErrors(parser);
+        const program = createProgram(test.input);
 
         expect(program.statements).toHaveLength(1);
 
@@ -34,7 +38,38 @@ it("should parse let statements", () => {
     }
 });
 
+it("should parse return statements", () => {
+    const tests = [
+        { input: "return 5;", expectedValue: 5 },
+        { input: "return foobar;", expectedValue: "foobar" },
+        { input: "return true;", expectedValue: true },
+    ];
+
+    for (const test of tests) {
+        const program = createProgram(test.input);
+
+        expect(program.statements).toHaveLength(1);
+
+        const stmt = program.statements[0];
+
+        expect(stmt).toBeInstanceOf(ReturnStatement);
+        expect(stmt.tokenLiteral()).toBe("return");
+        testLiteralExpression(stmt.returnValue, test.expectedValue);
+    }
+});
+
+function createProgram(input: string) {
+    const lexer = new Lexer(input);
+    const parser = new Parser(lexer);
+    const program = parser.parseProgram();
+
+    checkParserErrors(parser);
+
+    return program;
+}
+
 function testLetStatement(statement: ProgramStatement, name: string) {
+    expect(statement).toBeInstanceOf(LetStatement);
     expect(statement.tokenLiteral()).toBe("let");
     expect(statement.name?.value).toBe(name);
     expect(statement.name?.tokenLiteral()).toBe(name);
@@ -54,16 +89,19 @@ function testLiteralExpression(exp: Expression, expected: any) {
 }
 
 function testIdentifier(exp: Identifier, value: string) {
+    expect(exp).toBeInstanceOf(Identifier);
     expect(exp.value).toBe(value);
     expect(exp.tokenLiteral()).toBe(value);
 }
 
-function testIntegerLiteral(intLit: Expression, value: number) {
+function testIntegerLiteral(intLit: IntegerLiteral, value: number) {
+    expect(intLit).toBeInstanceOf(IntegerLiteral);
     expect(intLit.value).toBe(value);
     expect(intLit.tokenLiteral()).toBe(value.toString());
 }
 
-function testBooleanLiteral(exp: Expression, value: boolean) {
+function testBooleanLiteral(exp: BooleanLiteral, value: boolean) {
+    expect(exp).toBeInstanceOf(BooleanLiteral);
     expect(exp.value).toBe(value);
     expect(exp.tokenLiteral()).toBe(`${value}`);
 }

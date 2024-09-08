@@ -119,6 +119,34 @@ export class LetStatement extends Statement {
     }
 }
 
+type ReturnStatementNode = {
+    token?: Token;
+    returnValue?: Expression;
+};
+export class ReturnStatement extends Statement {
+    public returnValue?: Expression;
+
+    constructor(returnStatementNode: ReturnStatementNode) {
+        super({ token: returnStatementNode.token });
+
+        if (returnStatementNode.returnValue) {
+            this.returnValue = returnStatementNode.returnValue;
+        }
+    }
+
+    public string(): string {
+        const out: string[] = [];
+
+        out.push(this.tokenLiteral() + " ");
+        if (this.returnValue) {
+            out.push(this.returnValue.string());
+        }
+        out.push(";");
+
+        return out.join("");
+    }
+}
+
 type IdentifierExpressionNode = {
     token?: Token;
     value?: Value;
