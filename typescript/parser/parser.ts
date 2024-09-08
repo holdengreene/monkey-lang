@@ -1,10 +1,12 @@
 import {
     BooleanLiteral,
     Expression,
+    ExpressionStatement,
     Identifier,
     InfixExpression,
     IntegerLiteral,
     LetStatement,
+    PrefixExpression,
     Program,
     ReturnStatement,
     Statement,
@@ -53,6 +55,8 @@ export class Parser {
         this.registerPrefix(tokenItem.INT, this.parseIntegerLiteral);
         this.registerPrefix(tokenItem.TRUE, this.parseBoolean);
         this.registerPrefix(tokenItem.FALSE, this.parseBoolean);
+        this.registerPrefix(tokenItem.BANG, this.parsePrefixExpression);
+        this.registerPrefix(tokenItem.MINUS, this.parsePrefixExpression)
 
         this.registerInfix(tokenItem.PLUS, this.parseInfixExpression);
 
@@ -91,6 +95,8 @@ export class Parser {
                 return this.parseLetStatement();
             case tokenItem.RETURN:
                 return this.parseReturnStatement();
+            default:
+                return this.parseExpressionStatement();
         }
     }
 
@@ -163,6 +169,31 @@ export class Parser {
         }
 
         return leftExp;
+    }
+
+    private parseExpressionStatement(): ExpressionStatement {
+        const stmt = new ExpressionStatement({ token: this.curToken });
+
+        stmt.expression = this.parseExpression(Operators.LOWEST);
+
+        if (this.peekTokenIs(tokenItem.SEMICOLON)) {
+            this.nextToken();
+        }
+
+        return stmt;
+    }
+
+    private parsePrefixExpression = (): PrefixExpression => {
+        let expression = new PrefixExpression({
+            token: this.curToken,
+            operator: this.curToken.literal,
+        });
+
+        this.nextToken();
+
+        expression.right = this.parseExpression(Operators.PREFIX);
+
+        return expression;
     }
 
     private parseIdentifier = (): Identifier => {

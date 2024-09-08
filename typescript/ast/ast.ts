@@ -93,9 +93,7 @@ export class LetStatement extends Statement {
             this.name = new Identifier(statementNode.name);
         }
 
-        if (statementNode.value) {
-            this.value = new Expression(statementNode.value);
-        }
+        this.value = new Expression(statementNode.value);
     }
 
     public string(): string {
@@ -129,9 +127,7 @@ export class ReturnStatement extends Statement {
     constructor(returnStatementNode: ReturnStatementNode) {
         super({ token: returnStatementNode.token });
 
-        if (returnStatementNode.returnValue) {
-            this.returnValue = returnStatementNode.returnValue;
-        }
+        this.returnValue = returnStatementNode.returnValue;
     }
 
     public string(): string {
@@ -147,6 +143,28 @@ export class ReturnStatement extends Statement {
     }
 }
 
+type ExpressionStatementNode = {
+    token?: Token;
+    expression?: Expression;
+};
+export class ExpressionStatement extends Statement {
+    public expression?: Expression;
+
+    constructor(expressionStatementNode: ExpressionStatementNode) {
+        super({ token: expressionStatementNode.token });
+
+        this.expression = expressionStatementNode.expression;
+    }
+
+    public string(): string {
+        if (this.expression) {
+            return this.expression.string();
+        }
+
+        return "";
+    }
+}
+
 type IdentifierExpressionNode = {
     token?: Token;
     value?: Value;
@@ -157,13 +175,38 @@ export class Identifier extends Expression {
     }
 }
 
+type PrefixExpressionNode = {
+    token?: Token;
+    operator?: string;
+    right?: Expression;
+};
+export class PrefixExpression extends Expression {
+    public operator?: string;
+    public right?: Expression;
+
+    constructor(prefixExpressionNode: PrefixExpressionNode) {
+        super({ token: prefixExpressionNode.token });
+
+        this.operator = prefixExpressionNode.operator;
+        this.right = prefixExpressionNode.right;
+    }
+
+    public string(): string {
+        const out: string[] = [];
+        out.push("(");
+        out.push(this.operator ?? "");
+        out.push(this.right?.string() ?? "");
+        out.push(")");
+        return out.join("");
+    }
+}
+
 type InfixExpressionNode = {
     token?: Token;
     left?: TokVal;
     operator?: string;
     right?: TokVal;
 };
-
 export class InfixExpression extends Expression {
     public left?: Expression;
     public operator?: string;
@@ -174,9 +217,7 @@ export class InfixExpression extends Expression {
 
         this.left = new Expression(infixExpressionNode.left);
         this.operator = infixExpressionNode.operator;
-        if (infixExpressionNode.right) {
-            this.right = new Expression(infixExpressionNode.right);
-        }
+        this.right = new Expression(infixExpressionNode.right);
     }
 
     public string(): string {
@@ -216,12 +257,12 @@ export class StringLiteral extends Expression {
     }
 }
 
-type BooleanNode = {
+type BooleanLiteralNode = {
     token?: Token;
     value?: boolean;
 };
 export class BooleanLiteral extends Expression {
-    constructor(booleanNode: BooleanNode) {
+    constructor(booleanNode: BooleanLiteralNode) {
         super(booleanNode);
     }
 }

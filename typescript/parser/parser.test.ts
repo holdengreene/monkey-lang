@@ -2,6 +2,7 @@ import { expect, it } from "vitest";
 import {
     BooleanLiteral,
     Expression,
+    ExpressionStatement,
     Identifier,
     IntegerLiteral,
     LetStatement,
@@ -31,9 +32,17 @@ it("should parse let statements", () => {
 
         expect(program.statements).toHaveLength(1);
 
-        const stmt = program.statements[0];
+        const stmt = program.statements[0] as LetStatement;
 
         testLetStatement(stmt, test.expectedIdentifier);
+
+        if (!stmt.value) {
+            throw new Error("The value is missing");
+        }
+
+        if (typeof stmt.value === "string") {
+            throw new Error("The value is the wrong type. It's a string.");
+        }
         testLiteralExpression(stmt.value, test.expectedValue);
     }
 });
@@ -50,13 +59,73 @@ it("should parse return statements", () => {
 
         expect(program.statements).toHaveLength(1);
 
-        const stmt = program.statements[0];
+        const stmt = program.statements[0] as ReturnStatement;
 
         expect(stmt).toBeInstanceOf(ReturnStatement);
         expect(stmt.tokenLiteral()).toBe("return");
+        if (!stmt.returnValue) {
+            throw new Error("The returnValue is missing");
+        }
         testLiteralExpression(stmt.returnValue, test.expectedValue);
     }
 });
+
+it("should parse identifier expressions", () => {
+    const input = "foobar;";
+
+    const program = createProgram(input);
+
+    expect(program.statements).toHaveLength(1);
+
+    const stmt = program.statements[0] as ExpressionStatement;
+
+    expect(stmt).toBeInstanceOf(ExpressionStatement);
+
+    const ident = stmt.expression;
+
+    expect(ident).toBeInstanceOf(Identifier);
+    expect(ident?.value).toBe("foobar");
+    expect(ident?.tokenLiteral()).toBe("foobar");
+});
+
+it("should parse integer literal expressions", () => {
+    const input = "5;";
+
+    const program = createProgram(input);
+
+    expect(program.statements).toHaveLength(1);
+
+    const stmt = program.statements[0] as ExpressionStatement;
+
+    expect(stmt).toBeInstanceOf(ExpressionStatement);
+
+    const literal = stmt.expression;
+
+    expect(literal).toBeInstanceOf(IntegerLiteral);
+    expect(literal?.value).toBe(5);
+    expect(literal?.tokenLiteral()).toBe("5");
+});
+
+it("should parse prefix expressions", () => {
+    const tests = [
+        {input: "!5;", operator: "!", value: 5},
+        {input: "-15;", operator: "-", value: 15},
+        {input: "!true;", operator: "!", value: true},
+        {input: "!false;", operator: "!", value: false},
+    ]
+
+    for (const test of tests) {
+        const program = createProgram(test.input);
+
+        expect(program.statements).toHaveLength(1);
+
+        const stmt = program.statements[0] as ExpressionStatement;
+
+        expect(stmt).toBeInstanceOf(ExpressionStatement);
+
+        const exp = stmt.expression
+    }
+})
 
 function createProgram(input: string) {
     const lexer = new Lexer(input);
