@@ -6,6 +6,7 @@ import {
     Identifier,
     IntegerLiteral,
     LetStatement,
+    PrefixExpression,
     ProgramStatement,
     ReturnStatement,
 } from "../ast/ast.js";
@@ -108,11 +109,11 @@ it("should parse integer literal expressions", () => {
 
 it("should parse prefix expressions", () => {
     const tests = [
-        {input: "!5;", operator: "!", value: 5},
-        {input: "-15;", operator: "-", value: 15},
-        {input: "!true;", operator: "!", value: true},
-        {input: "!false;", operator: "!", value: false},
-    ]
+        { input: "!5;", operator: "!", value: 5 },
+        { input: "-15;", operator: "-", value: 15 },
+        { input: "!true;", operator: "!", value: true },
+        { input: "!false;", operator: "!", value: false },
+    ];
 
     for (const test of tests) {
         const program = createProgram(test.input);
@@ -123,9 +124,18 @@ it("should parse prefix expressions", () => {
 
         expect(stmt).toBeInstanceOf(ExpressionStatement);
 
-        const exp = stmt.expression
+        const exp = stmt.expression as PrefixExpression;
+
+        expect(exp).toBeInstanceOf(PrefixExpression);
+        expect(exp.operator).toBe(test.operator);
+
+        if (!exp.right) {
+            throw new Error("exp.right is missing");
+        }
+
+        testLiteralExpression(exp.right, test.value);
     }
-})
+});
 
 function createProgram(input: string) {
     const lexer = new Lexer(input);
