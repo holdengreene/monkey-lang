@@ -250,6 +250,26 @@ it("should set the proper operator precedence", () => {
     }
 });
 
+it("should parse boolean expressions", () => {
+    const tests = [
+        { input: "true;", expectedBoolean: true },
+        { input: "false;", expectedBoolean: false },
+    ];
+
+    for (const test of tests) {
+        const program = createProgram(test.input);
+
+        expect(program.statements).toHaveLength(1);
+
+        const stmt = program.statements[0] as ExpressionStatement;
+        expect(stmt).toBeInstanceOf(ExpressionStatement);
+
+        const bool = stmt.expression;
+        expect(bool).toBeInstanceOf(BooleanLiteral);
+        expect(bool?.value).toBe(test.expectedBoolean);
+    }
+});
+
 function createProgram(input: string) {
     const lexer = new Lexer(input);
     const parser = new Parser(lexer);
