@@ -56,9 +56,16 @@ export class Parser {
         this.registerPrefix(tokenItem.TRUE, this.parseBoolean);
         this.registerPrefix(tokenItem.FALSE, this.parseBoolean);
         this.registerPrefix(tokenItem.BANG, this.parsePrefixExpression);
-        this.registerPrefix(tokenItem.MINUS, this.parsePrefixExpression)
+        this.registerPrefix(tokenItem.MINUS, this.parsePrefixExpression);
 
         this.registerInfix(tokenItem.PLUS, this.parseInfixExpression);
+        this.registerInfix(tokenItem.MINUS, this.parseInfixExpression);
+        this.registerInfix(tokenItem.SLASH, this.parseInfixExpression);
+        this.registerInfix(tokenItem.ASTERISK, this.parseInfixExpression);
+        this.registerInfix(tokenItem.EQ, this.parseInfixExpression);
+        this.registerInfix(tokenItem.NOT_EQ, this.parseInfixExpression);
+        this.registerInfix(tokenItem.LT, this.parseInfixExpression);
+        this.registerInfix(tokenItem.GT, this.parseInfixExpression);
 
         this.nextToken();
         this.nextToken();
@@ -194,7 +201,7 @@ export class Parser {
         expression.right = this.parseExpression(Operators.PREFIX);
 
         return expression;
-    }
+    };
 
     private parseIdentifier = (): Identifier => {
         return new Identifier({
@@ -224,7 +231,7 @@ export class Parser {
         });
     };
 
-    private parseInfixExpression(left: Expression): InfixExpression {
+    private parseInfixExpression = (left: Expression): InfixExpression => {
         const exp = new InfixExpression({
             token: this.curToken,
             operator: this.curToken.literal,
@@ -233,7 +240,7 @@ export class Parser {
 
         const precedence = this.curPrecedence();
         this.nextToken();
-        exp.right = new Expression(this.parseExpression(precedence));
+        exp.right = this.parseExpression(precedence);
 
         return exp;
     }

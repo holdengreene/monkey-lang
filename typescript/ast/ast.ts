@@ -5,11 +5,6 @@ type ASTNode = {
     string(): string;
 };
 
-type TokVal = {
-    token?: Token;
-    value?: Value;
-};
-
 type Value = string | number | boolean;
 
 export type ProgramStatement = Record<string, any>;
@@ -81,19 +76,15 @@ export class Statement implements ASTNode {
 
 type LetStatementNode = {
     token?: Token;
-    name?: TokVal;
-    value?: TokVal;
+    name?: Identifier;
+    value?: Expression;
 };
 export class LetStatement extends Statement {
     public name?: Identifier;
 
     constructor(statementNode: LetStatementNode) {
-        super({ token: statementNode.token });
-        if (statementNode.name) {
-            this.name = new Identifier(statementNode.name);
-        }
-
-        this.value = new Expression(statementNode.value);
+        super({ token: statementNode.token, value: statementNode.value });
+        this.name = statementNode.name;
     }
 
     public string(): string {
@@ -203,9 +194,9 @@ export class PrefixExpression extends Expression {
 
 type InfixExpressionNode = {
     token?: Token;
-    left?: TokVal;
+    left?: Expression;
     operator?: string;
-    right?: TokVal;
+    right?: Expression;
 };
 export class InfixExpression extends Expression {
     public left?: Expression;
@@ -215,9 +206,9 @@ export class InfixExpression extends Expression {
     constructor(infixExpressionNode: InfixExpressionNode) {
         super({ token: infixExpressionNode.token });
 
-        this.left = new Expression(infixExpressionNode.left);
+        this.left = infixExpressionNode.left;
         this.operator = infixExpressionNode.operator;
-        this.right = new Expression(infixExpressionNode.right);
+        this.right = infixExpressionNode.right;
     }
 
     public string(): string {

@@ -4,6 +4,7 @@ import {
     Expression,
     ExpressionStatement,
     Identifier,
+    InfixExpression,
     IntegerLiteral,
     LetStatement,
     PrefixExpression,
@@ -130,10 +131,62 @@ it("should parse prefix expressions", () => {
         expect(exp.operator).toBe(test.operator);
 
         if (!exp.right) {
-            throw new Error("exp.right is missing");
+            throw new Error("right is missing");
         }
 
         testLiteralExpression(exp.right, test.value);
+    }
+});
+
+it("should parse infix expressions", () => {
+    const tests = [
+        { input: "5 + 5;", leftValue: 5, operator: "+", rightValue: 5 },
+        { input: "5 - 5;", leftValue: 5, operator: "-", rightValue: 5 },
+        { input: "5 * 5;", leftValue: 5, operator: "*", rightValue: 5 },
+        { input: "5 / 5;", leftValue: 5, operator: "/", rightValue: 5 },
+        { input: "5 > 5;", leftValue: 5, operator: ">", rightValue: 5 },
+        { input: "5 < 5;", leftValue: 5, operator: "<", rightValue: 5 },
+        { input: "5 == 5;", leftValue: 5, operator: "==", rightValue: 5 },
+        { input: "5 != 5;", leftValue: 5, operator: "!=", rightValue: 5 },
+        {
+            input: "true == true",
+            leftValue: true,
+            operator: "==",
+            rightValue: true,
+        },
+        {
+            input: "true != false",
+            leftValue: true,
+            operator: "!=",
+            rightValue: false,
+        },
+        {
+            input: "false == false",
+            leftValue: false,
+            operator: "==",
+            rightValue: false,
+        },
+    ];
+
+    for (const test of tests) {
+        const program = createProgram(test.input);
+
+        expect(program.statements).toHaveLength(1);
+
+        const stmt = program.statements[0] as ExpressionStatement;
+
+        expect(stmt).toBeInstanceOf(ExpressionStatement);
+
+        if (!stmt.expression) {
+            throw new Error("expression is missing");
+        }
+
+        testinfixExpression(
+            stmt.expression,
+            test.leftValue,
+            test.operator,
+            test.rightValue,
+        );
     }
 });
 
@@ -185,6 +238,26 @@ function testBooleanLiteral(exp: BooleanLiteral, value: boolean) {
     expect(exp.tokenLiteral()).toBe(`${value}`);
 }
 
+function testinfixExpression(
+    exp: InfixExpression,
+    left: number | boolean,
+    operator: string,
+    right: number | boolean,
+) {
+    expect(exp).toBeInstanceOf(InfixExpression);
+
+    if (!exp.left) {
+        throw new Error("left is missing");
+    }
+    testLiteralExpression(exp.left, left);
+    expect(exp.operator).toBe(operator);
+
+    if (!exp.right) {
+        throw new Error("right is missing");
+    }
+    testLiteralExpression(exp.right, right);
+}
+
 function checkParserErrors(parser: Parser) {
     const errors = parser.getErrors;
 
@@ -198,5 +271,5 @@ function checkParserErrors(parser: Parser) {
         console.error(`parser error: ${error}`);
     }
 
-    expect(errors.length).toHaveLength(0);
+    expect(errors).toHaveLength(0);
 }

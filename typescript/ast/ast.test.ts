@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 import { tokenItem } from "../token/token.js";
-import { LetStatement, Program } from "./ast.js";
+import { Identifier, LetStatement, Program } from "./ast.js";
 
 it("should properly create ast", () => {
     const stmts = [
@@ -9,20 +9,20 @@ it("should properly create ast", () => {
                 type: tokenItem.LET,
                 literal: "let",
             },
-            name: {
+            name: new Identifier({
                 token: {
                     type: tokenItem.IDENT,
                     literal: "myVar",
                 },
                 value: "myVar",
-            },
-            value: {
+            }),
+            value: new Identifier({
                 token: {
                     type: tokenItem.IDENT,
                     literal: "anotherVar",
                 },
                 value: "anotherVar",
-            },
+            }),
         }),
     ];
 

@@ -181,7 +181,11 @@ export class Lexer {
     }
 
     private isLetter(ch: chType): boolean {
-        const char = (ch as string).charCodeAt(0);
+        if (typeof ch !== "string") {
+            return false;
+        }
+
+        const char = ch.charCodeAt(0);
         return (
             (this.a <= char && char <= this.z) ||
             (this.A <= char && char <= this.Z) ||
@@ -190,7 +194,11 @@ export class Lexer {
     }
 
     private isDigit(ch: chType): boolean {
-        const char = (ch as string).charCodeAt(0);
+        if (typeof ch !== "string") {
+            return false;
+        }
+
+        const char = ch.charCodeAt(0);
         return this._0 <= char && this._9 >= char;
     }
 }
