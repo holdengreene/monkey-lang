@@ -285,6 +285,44 @@ it("should parse if expressions", () => {
     expect(exp.alternative).toBeUndefined();
 });
 
+it("should parse if else expressions", () => {
+    const input = "if (x < y) { x } else { y }";
+
+    const program = createProgram(input);
+    expect(program.statements).toHaveLength(1);
+
+    const stmt = program.statements[0] as ExpressionStatement;
+    expect(stmt).toBeInstanceOf(ExpressionStatement);
+
+    const exp = stmt.expression as IfExpression;
+    expect(exp).toBeInstanceOf(IfExpression);
+
+    if (!exp.condition) {
+        throw new Error("condition is missing");
+    }
+    testinfixExpression(exp.condition, "x", "<", "y");
+
+    expect(exp.consequence?.statements).toHaveLength(1);
+
+    const consequence = exp.consequence?.statements?.[0] as ExpressionStatement;
+    expect(consequence).toBeInstanceOf(ExpressionStatement);
+
+    if (!consequence.expression) {
+        throw new Error("consequence.expression is missing");
+    }
+    testIdentifier(consequence.expression, "x");
+
+    expect(exp.alternative?.statements).toHaveLength(1);
+
+    const alternative = exp.alternative?.statements?.[0] as ExpressionStatement;
+    expect(alternative).toBeInstanceOf(ExpressionStatement);
+
+    if (!alternative.expression) {
+        throw new Error("alternative.expression is missing");
+    }
+    testIdentifier(alternative.expression, "y");
+});
+
 function createProgram(input: string) {
     const lexer = new Lexer(input);
     const parser = new Parser(lexer);
