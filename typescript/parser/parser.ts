@@ -1,11 +1,13 @@
 import {
     ArrayLiteral,
+    BlockStatement,
     BooleanLiteral,
     CallExpression,
     Expression,
     ExpressionStatement,
     HashLiteral,
     Identifier,
+    IfExpression,
     IndexExpression,
     InfixExpression,
     IntegerLiteral,
@@ -64,6 +66,7 @@ export class Parser {
         this.registerPrefix(tokenItem.LPAREN, this.parseGroupedExpression);
         this.registerPrefix(tokenItem.LBRACKET, this.parseArrayLiteral);
         this.registerPrefix(tokenItem.LBRACE, this.parseHashLiteral);
+        this.registerPrefix(tokenItem.IF, this.parseIfExpression);
 
         this.registerInfix(tokenItem.PLUS, this.parseInfixExpression);
         this.registerInfix(tokenItem.MINUS, this.parseInfixExpression);
@@ -118,7 +121,7 @@ export class Parser {
     }
 
     private parseLetStatement(): LetStatement | undefined {
-        let stmt = new LetStatement({
+        const stmt = new LetStatement({
             token: this.curToken,
         });
 
@@ -147,7 +150,7 @@ export class Parser {
     }
 
     private parseReturnStatement(): ReturnStatement {
-        let stmt = new ReturnStatement({ token: this.curToken });
+        const stmt = new ReturnStatement({ token: this.curToken });
 
         this.nextToken();
 
@@ -201,7 +204,7 @@ export class Parser {
     }
 
     private parsePrefixExpression = (): PrefixExpression => {
-        let expression = new PrefixExpression({
+        const expression = new PrefixExpression({
             token: this.curToken,
             operator: this.curToken.literal,
         });
@@ -268,7 +271,7 @@ export class Parser {
     };
 
     private parseCallExpression = (fn?: Expression): CallExpression => {
-        let exp = new CallExpression({ token: this.curToken, function: fn });
+        const exp = new CallExpression({ token: this.curToken, function: fn });
         exp.arguments = this.parseExpressionList(tokenItem.RPAREN);
 
         return exp;
@@ -308,7 +311,7 @@ export class Parser {
     };
 
     private parseArrayLiteral = (): ArrayLiteral => {
-        let array = new ArrayLiteral({ token: this.curToken });
+        const array = new ArrayLiteral({ token: this.curToken });
 
         array.elements = this.parseExpressionList(tokenItem.RBRACKET);
 
@@ -318,7 +321,7 @@ export class Parser {
     private parseIndexExpression = (
         left?: Expression,
     ): IndexExpression | undefined => {
-        let exp = new IndexExpression({ token: this.curToken, left });
+        const exp = new IndexExpression({ token: this.curToken, left });
 
         this.nextToken();
         exp.index = this.parseExpression(Operators.LOWEST);
@@ -364,6 +367,60 @@ export class Parser {
         }
 
         return hash;
+    };
+
+    private parseIfExpression = (): IfExpression | undefined => {
+        const exp = new IfExpression({ token: this.curToken });
+
+        if (!this.expectPeek(tokenItem.LPAREN)) {
+            return undefined;
+        }
+
+        this.nextToken();
+        exp.condition = this.parseExpression(Operators.LOWEST);
+
+        if (!this.expectPeek(tokenItem.RPAREN)) {
+            return undefined;
+        }
+
+        if (!this.expectPeek(tokenItem.LBRACE)) {
+            return undefined;
+        }
+
+        exp.consequence = this.parseBlockStatement();
+
+        if (this.peekTokenIs(tokenItem.ELSE)) {
+            this.nextToken();
+
+            if (!this.expectPeek(tokenItem.LBRACE)) {
+                return undefined;
+            }
+
+            exp.alternative = this.parseBlockStatement();
+        }
+
+        return exp;
+    };
+
+    private parseBlockStatement = (): BlockStatement => {
+        const block = new BlockStatement({ token: this.curToken });
+        block.statements = [];
+
+        this.nextToken();
+
+        while (
+            !this.curTokenIs(tokenItem.RBRACE) &&
+            !this.curTokenIs(tokenItem.EOF)
+        ) {
+            const stmt = this.parseStatement();
+
+            if (stmt) {
+                block.statements?.push(stmt);
+            }
+            this.nextToken();
+        }
+
+        return block;
     };
 
     private registerPrefix(tokenType: TokenType, fn: PrefixFn): void {

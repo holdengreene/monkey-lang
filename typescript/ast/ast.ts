@@ -228,6 +228,63 @@ export class InfixExpression extends Expression {
     }
 }
 
+type IfExpressionNode = {
+    token?: Token;
+    condition?: Expression;
+    consequence?: BlockStatement;
+    alternative?: BlockStatement;
+};
+export class IfExpression extends Expression {
+    public condition?: Expression;
+    public consequence?: BlockStatement;
+    public alternative?: BlockStatement;
+
+    constructor(ifExpressionNode: IfExpressionNode) {
+        super({ token: ifExpressionNode.token });
+        this.condition = ifExpressionNode.condition;
+        this.consequence = ifExpressionNode.consequence;
+        this.alternative = ifExpressionNode.alternative;
+    }
+
+    public string(): string {
+        const out: string[] = [];
+        out.push("if");
+        out.push(this.condition?.string() ?? "");
+        out.push(" ");
+        out.push(this.consequence?.string() ?? "");
+
+        if (this.alternative) {
+            out.push("else ");
+            out.push(this.alternative.string());
+        }
+
+        return out.join("");
+    }
+}
+
+type BlockStatementNode = {
+    token?: Token;
+    statements?: Statement[];
+};
+export class BlockStatement extends Statement {
+    public statements?: Statement[];
+
+    constructor(blockStatementNode: BlockStatementNode) {
+        super({ token: blockStatementNode.token });
+        this.statements = blockStatementNode.statements;
+    }
+
+    public string(): string {
+        const out: string[] = [];
+
+        for (const stmt of this.statements ?? []) {
+            out.push(stmt.string());
+        }
+
+        return out.join("");
+    }
+}
+
 type CallExpressionNode = {
     token?: Token;
     function?: Expression;

@@ -4,6 +4,7 @@ import {
     Expression,
     ExpressionStatement,
     Identifier,
+    IfExpression,
     InfixExpression,
     IntegerLiteral,
     LetStatement,
@@ -31,11 +32,9 @@ it("should parse let statements", () => {
 
     for (const test of tests) {
         const program = createProgram(test.input);
-
         expect(program.statements).toHaveLength(1);
 
         const stmt = program.statements[0] as LetStatement;
-
         testLetStatement(stmt, test.expectedIdentifier);
 
         if (!stmt.value) {
@@ -58,11 +57,9 @@ it("should parse return statements", () => {
 
     for (const test of tests) {
         const program = createProgram(test.input);
-
         expect(program.statements).toHaveLength(1);
 
         const stmt = program.statements[0] as ReturnStatement;
-
         expect(stmt).toBeInstanceOf(ReturnStatement);
         expect(stmt.tokenLiteral()).toBe("return");
         if (!stmt.returnValue) {
@@ -76,15 +73,12 @@ it("should parse identifier expressions", () => {
     const input = "foobar;";
 
     const program = createProgram(input);
-
     expect(program.statements).toHaveLength(1);
 
     const stmt = program.statements[0] as ExpressionStatement;
-
     expect(stmt).toBeInstanceOf(ExpressionStatement);
 
     const ident = stmt.expression;
-
     expect(ident).toBeInstanceOf(Identifier);
     expect(ident?.value).toBe("foobar");
     expect(ident?.tokenLiteral()).toBe("foobar");
@@ -94,15 +88,12 @@ it("should parse integer literal expressions", () => {
     const input = "5;";
 
     const program = createProgram(input);
-
     expect(program.statements).toHaveLength(1);
 
     const stmt = program.statements[0] as ExpressionStatement;
-
     expect(stmt).toBeInstanceOf(ExpressionStatement);
 
     const literal = stmt.expression;
-
     expect(literal).toBeInstanceOf(IntegerLiteral);
     expect(literal?.value).toBe(5);
     expect(literal?.tokenLiteral()).toBe("5");
@@ -118,15 +109,12 @@ it("should parse prefix expressions", () => {
 
     for (const test of tests) {
         const program = createProgram(test.input);
-
         expect(program.statements).toHaveLength(1);
 
         const stmt = program.statements[0] as ExpressionStatement;
-
         expect(stmt).toBeInstanceOf(ExpressionStatement);
 
         const exp = stmt.expression as PrefixExpression;
-
         expect(exp).toBeInstanceOf(PrefixExpression);
         expect(exp.operator).toBe(test.operator);
 
@@ -170,11 +158,9 @@ it("should parse infix expressions", () => {
 
     for (const test of tests) {
         const program = createProgram(test.input);
-
         expect(program.statements).toHaveLength(1);
 
         const stmt = program.statements[0] as ExpressionStatement;
-
         expect(stmt).toBeInstanceOf(ExpressionStatement);
 
         if (!stmt.expression) {
@@ -258,7 +244,6 @@ it("should parse boolean expressions", () => {
 
     for (const test of tests) {
         const program = createProgram(test.input);
-
         expect(program.statements).toHaveLength(1);
 
         const stmt = program.statements[0] as ExpressionStatement;
@@ -268,6 +253,36 @@ it("should parse boolean expressions", () => {
         expect(bool).toBeInstanceOf(BooleanLiteral);
         expect(bool?.value).toBe(test.expectedBoolean);
     }
+});
+
+it("should parse if expressions", () => {
+    const input = "if (x < y) { x }";
+
+    const program = createProgram(input);
+    expect(program.statements).toHaveLength(1);
+
+    const stmt = program.statements[0] as ExpressionStatement;
+    expect(stmt).toBeInstanceOf(ExpressionStatement);
+
+    const exp = stmt.expression as IfExpression;
+    expect(exp).toBeInstanceOf(IfExpression);
+
+    if (!exp.condition) {
+        throw new Error("condition is missing");
+    }
+    testinfixExpression(exp.condition, "x", "<", "y");
+
+    expect(exp.consequence?.statements).toHaveLength(1);
+
+    const consequence = exp.consequence?.statements?.[0] as ExpressionStatement;
+    expect(consequence).toBeInstanceOf(ExpressionStatement);
+
+    if (!consequence.expression) {
+        throw new Error("consequence.expression is missing");
+    }
+    testIdentifier(consequence.expression, "x");
+
+    expect(exp.alternative).toBeUndefined();
 });
 
 function createProgram(input: string) {
@@ -320,9 +335,9 @@ function testBooleanLiteral(exp: BooleanLiteral, value: boolean) {
 
 function testinfixExpression(
     exp: InfixExpression,
-    left: number | boolean,
+    left: number | boolean | string,
     operator: string,
-    right: number | boolean,
+    right: number | boolean | string,
 ) {
     expect(exp).toBeInstanceOf(InfixExpression);
 
