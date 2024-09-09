@@ -228,6 +228,113 @@ export class InfixExpression extends Expression {
     }
 }
 
+type CallExpressionNode = {
+    token?: Token;
+    function?: Expression;
+    arguments?: Expression[];
+};
+export class CallExpression extends Expression {
+    public function?: Expression;
+    public arguments?: Expression[];
+
+    constructor(callExpressionNode: CallExpressionNode) {
+        super({ token: callExpressionNode.token });
+
+        this.function = callExpressionNode.function;
+        this.arguments = callExpressionNode.arguments;
+    }
+
+    public string(): string {
+        const out: string[] = [];
+        const args: string[] = [];
+
+        for (const arg of this.arguments ?? []) {
+            args.push(arg.string());
+        }
+
+        out.push(this.function?.string() ?? "");
+        out.push("(");
+        out.push(args.join(", "));
+        out.push(")");
+
+        return out.join("");
+    }
+}
+
+type HashLiteralNode = {
+    token?: Token;
+    pairs?: Map<Expression, Expression>;
+};
+export class HashLiteral extends Expression {
+    public pairs?: Map<Expression, Expression>;
+
+    constructor(hashLiteralNode: HashLiteralNode) {
+        super({ token: hashLiteralNode.token });
+    }
+
+    // public string(): string {
+    //     const out: string[] = [];
+    //     const pairs: string[] = [];
+
+    //     for (const pair of this.pairs ?? []) {
+    //         pairs.push(pair[0].)
+    //     }
+    // }
+}
+
+type ArrayLiteralNode = {
+    token?: Token;
+    elements?: Expression[];
+};
+export class ArrayLiteral extends Expression {
+    public elements?: Expression[];
+
+    constructor(arrayLiteralNode: ArrayLiteralNode) {
+        super({ token: arrayLiteralNode.token });
+        this.elements = arrayLiteralNode.elements;
+    }
+
+    public string(): string {
+        const out: string[] = [];
+        const elements: string[] = [];
+
+        for (const element of this.elements ?? []) {
+            elements.push(element.string());
+        }
+
+        out.push("[");
+        out.push(elements.join(", "));
+        out.push("]");
+        return out.join("");
+    }
+}
+
+type IndexExpressionNode = {
+    token?: Token;
+    left?: Expression;
+    index?: Expression;
+};
+export class IndexExpression extends Expression {
+    public left?: Expression;
+    public index?: Expression;
+
+    constructor(indexExpressionNode: IndexExpressionNode) {
+        super({ token: indexExpressionNode.token });
+        this.left = indexExpressionNode.left;
+        this.index = indexExpressionNode.index;
+    }
+
+    public string(): string {
+        const out: string[] = [];
+        out.push("(");
+        out.push(this.left?.string() ?? "");
+        out.push("[");
+        out.push(this.index?.string() ?? "");
+        out.push("])");
+        return out.join("");
+    }
+}
+
 type IntegerLiteralNode = {
     token?: Token;
     value?: number;

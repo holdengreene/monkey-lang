@@ -1,8 +1,12 @@
 import {
+    ArrayLiteral,
     BooleanLiteral,
+    CallExpression,
     Expression,
     ExpressionStatement,
+    HashLiteral,
     Identifier,
+    IndexExpression,
     InfixExpression,
     IntegerLiteral,
     LetStatement,
@@ -14,8 +18,8 @@ import {
 import type { Lexer } from "../lexer/Lexer.js";
 import { tokenItem, TokenType, type Token } from "../token/token.js";
 
-type PrefixFn = () => Expression;
-type InfixFn = (arg: Expression) => Expression;
+type PrefixFn = () => Expression | undefined;
+type InfixFn = (arg?: Expression) => Expression | undefined;
 
 enum Operators {
     LOWEST,
@@ -57,6 +61,9 @@ export class Parser {
         this.registerPrefix(tokenItem.FALSE, this.parseBoolean);
         this.registerPrefix(tokenItem.BANG, this.parsePrefixExpression);
         this.registerPrefix(tokenItem.MINUS, this.parsePrefixExpression);
+        this.registerPrefix(tokenItem.LPAREN, this.parseGroupedExpression);
+        this.registerPrefix(tokenItem.LBRACKET, this.parseArrayLiteral);
+        this.registerPrefix(tokenItem.LBRACE, this.parseHashLiteral);
 
         this.registerInfix(tokenItem.PLUS, this.parseInfixExpression);
         this.registerInfix(tokenItem.MINUS, this.parseInfixExpression);
@@ -66,7 +73,10 @@ export class Parser {
         this.registerInfix(tokenItem.NOT_EQ, this.parseInfixExpression);
         this.registerInfix(tokenItem.LT, this.parseInfixExpression);
         this.registerInfix(tokenItem.GT, this.parseInfixExpression);
+        this.registerInfix(tokenItem.LPAREN, this.parseCallExpression);
+        this.registerInfix(tokenItem.LBRACKET, this.parseIndexExpression);
 
+        // Read two tokens, so curToken and peekToken are both set
         this.nextToken();
         this.nextToken();
     }
@@ -231,7 +241,7 @@ export class Parser {
         });
     };
 
-    private parseInfixExpression = (left: Expression): InfixExpression => {
+    private parseInfixExpression = (left?: Expression): InfixExpression => {
         const exp = new InfixExpression({
             token: this.curToken,
             operator: this.curToken.literal,
@@ -243,7 +253,118 @@ export class Parser {
         exp.right = this.parseExpression(precedence);
 
         return exp;
-    }
+    };
+
+    private parseGroupedExpression = (): Expression | undefined => {
+        this.nextToken();
+
+        const exp = this.parseExpression(Operators.LOWEST);
+
+        if (!this.expectPeek(tokenItem.RPAREN)) {
+            return undefined;
+        }
+
+        return exp;
+    };
+
+    private parseCallExpression = (fn?: Expression): CallExpression => {
+        let exp = new CallExpression({ token: this.curToken, function: fn });
+        exp.arguments = this.parseExpressionList(tokenItem.RPAREN);
+
+        return exp;
+    };
+
+    private parseExpressionList = (
+        end: TokenType,
+    ): Expression[] | undefined => {
+        const list: Expression[] | undefined = [];
+
+        if (this.peekTokenIs(end)) {
+            this.nextToken();
+            return list;
+        }
+
+        this.nextToken();
+        const exp = this.parseExpression(Operators.LOWEST);
+
+        if (exp) {
+            list.push(exp);
+        }
+
+        while (this.peekTokenIs(tokenItem.COMMA)) {
+            this.nextToken();
+            this.nextToken();
+            const iterExp = this.parseExpression(Operators.LOWEST);
+            if (iterExp) {
+                list.push(iterExp);
+            }
+        }
+
+        if (!this.expectPeek(end)) {
+            return undefined;
+        }
+
+        return list;
+    };
+
+    private parseArrayLiteral = (): ArrayLiteral => {
+        let array = new ArrayLiteral({ token: this.curToken });
+
+        array.elements = this.parseExpressionList(tokenItem.RBRACKET);
+
+        return array;
+    };
+
+    private parseIndexExpression = (
+        left?: Expression,
+    ): IndexExpression | undefined => {
+        let exp = new IndexExpression({ token: this.curToken, left });
+
+        this.nextToken();
+        exp.index = this.parseExpression(Operators.LOWEST);
+
+        if (!this.expectPeek(tokenItem.RBRACKET)) {
+            return undefined;
+        }
+
+        return exp;
+    };
+
+    private parseHashLiteral = (): HashLiteral | undefined => {
+        const hash = new HashLiteral({ token: this.curToken });
+        hash.pairs = new Map();
+
+        while (this.peekTokenIs(tokenItem.RBRACE)) {
+            this.nextToken();
+            const key = this.parseExpression(Operators.LOWEST);
+
+            if (!this.expectPeek(tokenItem.COLON) || !key) {
+                return undefined;
+            }
+
+            this.nextToken();
+            const value = this.parseExpression(Operators.LOWEST);
+
+            if (!value) {
+                return undefined;
+            }
+
+            hash.pairs.set(key, value);
+
+            if (
+                !this.peekTokenIs(tokenItem.RBRACE) &&
+                !this.expectPeek(tokenItem.COMMA)
+            ) {
+                return undefined;
+            }
+        }
+
+        if (!this.expectPeek(tokenItem.RBRACE)) {
+            return undefined;
+        }
+
+        return hash;
+    };
 
     private registerPrefix(tokenType: TokenType, fn: PrefixFn): void {
         this.prefixParseFns.set(tokenType, fn);
