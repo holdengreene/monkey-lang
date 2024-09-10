@@ -71,6 +71,8 @@ export class Parser {
         this.registerPrefix(tokenItem.IF, this.parseIfExpression);
         this.registerPrefix(tokenItem.FUNCTION, this.parseFunctionLiteral);
         this.registerPrefix(tokenItem.STRING, this.parseStringLiteral);
+        this.registerPrefix(tokenItem.LBRACKET, this.parseArrayLiteral);
+        this.registerPrefix(tokenItem.LBRACE, this.parseHashLiteral);
 
         this.registerInfix(tokenItem.PLUS, this.parseInfixExpression);
         this.registerInfix(tokenItem.MINUS, this.parseInfixExpression);
@@ -392,7 +394,7 @@ export class Parser {
         const hash = new HashLiteral({ token: this.curToken });
         hash.pairs = new Map();
 
-        while (this.peekTokenIs(tokenItem.RBRACE)) {
+        while (!this.peekTokenIs(tokenItem.RBRACE)) {
             this.nextToken();
             const key = this.parseExpression(Operators.LOWEST);
 

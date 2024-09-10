@@ -362,16 +362,22 @@ export class HashLiteral extends Expression {
 
     constructor(hashLiteralNode: HashLiteralNode) {
         super({ token: hashLiteralNode.token });
+        this.pairs = hashLiteralNode.pairs;
     }
 
-    // public string(): string {
-    //     const out: string[] = [];
-    //     const pairs: string[] = [];
+    public string(): string {
+        const out: string[] = [];
+        const pairs: string[] = [];
 
-    //     for (const pair of this.pairs ?? []) {
-    //         pairs.push(pair[0].)
-    //     }
-    // }
+        for (const [key, value] of this.pairs?.entries() ?? []) {
+            pairs.push(key.string() + ":" + value.string());
+        }
+
+        out.push("{");
+        out.push(pairs.join(", "));
+        out.push("}");
+        return out.join("");
+    }
 }
 
 type ArrayLiteralNode = {

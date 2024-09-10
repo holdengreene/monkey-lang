@@ -6,8 +6,10 @@ import {
     Expression,
     ExpressionStatement,
     FunctionLiteral,
+    HashLiteral,
     Identifier,
     IfExpression,
+    IndexExpression,
     InfixExpression,
     IntegerLiteral,
     LetStatement,
@@ -489,6 +491,85 @@ it("should parse array literals", () => {
     testIntegerLiteral(array.elements[0], 1);
     testinfixExpression(array.elements[1], 2, "*", 2);
     testinfixExpression(array.elements[2], 3, "+", 3);
+});
+
+it("should parse index expressions", () => {
+    const input = "myArray[1 + 1]";
+
+    const program = createProgram(input);
+
+    const stmt = program.statements[0] as ExpressionStatement;
+    const indexExp = stmt.expression as IndexExpression;
+    expect(indexExp).toBeInstanceOf(IndexExpression);
+
+    if (!indexExp.left) {
+        throw new Error("indexExp.left is missing");
+    }
+
+    testIdentifier(indexExp.left, "myArray");
+
+    if (!indexExp.index) {
+        throw new Error("indexExp.index is missing");
+    }
+
+    testinfixExpression(indexExp.index, 1, "+", 1);
+});
+
+it("should parse emtpy hash literals", () => {
+    const input = "{}";
+
+    const program = createProgram(input);
+    const stmt = program.statements[0] as ExpressionStatement;
+    const hash = stmt.expression as HashLiteral;
+    expect(hash).toBeInstanceOf(HashLiteral);
+    expect(hash.pairs).toHaveLength(0);
+});
+
+it("should parse hash literal string keys", () => {
+    const input = '{"one": 1, "two": 2, "three": 3}';
+
+    const program = createProgram(input);
+    const stmt = program.statements[0] as ExpressionStatement;
+    const hash = stmt.expression as HashLiteral;
+    expect(hash).toBeInstanceOf(HashLiteral);
+
+    const expected = new Map<string, number>();
+    expected.set("one", 1);
+    expected.set("two", 2);
+    expected.set("three", 3);
+
+    expect(hash.pairs).toHaveLength(expected.size);
+
+    for (const [key, value] of hash.pairs?.entries() ?? []) {
+        const literal = key as StringLiteral;
+        expect(literal).toBeInstanceOf(StringLiteral);
+
+        const expectedValue = expected.get(literal.string());
+        testIntegerLiteral(value, expectedValue!);
+    }
+});
+
+it("should parse hash literal boolean keys", () => {
+    const input = "{true: 1, false: 2}";
+
+    const program = createProgram(input);
+    const stmt = program.statements[0] as ExpressionStatement;
+    const hash = stmt.expression as HashLiteral;
+    expect(hash).toBeInstanceOf(HashLiteral);
+
+    const expected = new Map<string, number>();
+    expected.set("true", 1);
+    expected.set("false", 2);
+
+    expect(hash.pairs).toHaveLength(expected.size);
+
+    for (const [key, value] of hash.pairs?.entries() ?? []) {
+        const boolean = key as BooleanLiteral;
+        expect(boolean).toBeInstanceOf(BooleanLiteral);
+
+        const expectedValue = expected.get(boolean.string());
+        testIntegerLiteral(value, expectedValue!);
+    }
 });
 
 function createProgram(input: string) {
