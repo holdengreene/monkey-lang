@@ -173,7 +173,7 @@ it("should parse infix expressions", () => {
             throw new Error("expression is missing");
         }
 
-        testinfixExpression(
+        testInfixExpression(
             stmt.expression,
             test.leftValue,
             test.operator,
@@ -276,7 +276,7 @@ it("should parse if expressions", () => {
     if (!exp.condition) {
         throw new Error("condition is missing");
     }
-    testinfixExpression(exp.condition, "x", "<", "y");
+    testInfixExpression(exp.condition, "x", "<", "y");
 
     expect(exp.consequence?.statements).toHaveLength(1);
 
@@ -306,7 +306,7 @@ it("should parse if else expressions", () => {
     if (!exp.condition) {
         throw new Error("condition is missing");
     }
-    testinfixExpression(exp.condition, "x", "<", "y");
+    testInfixExpression(exp.condition, "x", "<", "y");
 
     expect(exp.consequence?.statements).toHaveLength(1);
 
@@ -403,8 +403,8 @@ it("should parse call expressions", () => {
     }
 
     testLiteralExpression(exp.arguments[0], 1);
-    testinfixExpression(exp.arguments[1], 2, "*", 3);
-    testinfixExpression(exp.arguments[2], 4, "+", 5);
+    testInfixExpression(exp.arguments[1], 2, "*", 3);
+    testInfixExpression(exp.arguments[2], 4, "+", 5);
 });
 
 it("should parse call expression parameters", () => {
@@ -489,8 +489,8 @@ it("should parse array literals", () => {
     }
 
     testIntegerLiteral(array.elements[0], 1);
-    testinfixExpression(array.elements[1], 2, "*", 2);
-    testinfixExpression(array.elements[2], 3, "+", 3);
+    testInfixExpression(array.elements[1], 2, "*", 2);
+    testInfixExpression(array.elements[2], 3, "+", 3);
 });
 
 it("should parse index expressions", () => {
@@ -512,7 +512,7 @@ it("should parse index expressions", () => {
         throw new Error("indexExp.index is missing");
     }
 
-    testinfixExpression(indexExp.index, 1, "+", 1);
+    testInfixExpression(indexExp.index, 1, "+", 1);
 });
 
 it("should parse emtpy hash literals", () => {
@@ -572,6 +572,56 @@ it("should parse hash literal boolean keys", () => {
     }
 });
 
+it("should parse hash literal integer keys", () => {
+    const input = "{1: 1, 2: 2, 3: 3}";
+
+    const program = createProgram(input);
+    const stmt = program.statements[0] as ExpressionStatement;
+    const hash = stmt.expression as HashLiteral;
+    expect(hash).toBeInstanceOf(HashLiteral);
+
+    const expected = new Map<string, number>();
+    expected.set("1", 1);
+    expected.set("2", 2);
+    expected.set("3", 3);
+
+    expect(hash.pairs).toHaveLength(expected.size);
+
+    for (const [key, value] of hash.pairs?.entries() ?? []) {
+        const integer = key as IntegerLiteral;
+        expect(integer).toBeInstanceOf(IntegerLiteral);
+
+        const expectedValue = expected.get(integer.string());
+        testIntegerLiteral(value, expectedValue!);
+    }
+});
+
+it("should parse hash literal with expressions", () => {
+    const input = '{"one": 0 + 1, "two": 10 - 8, "three": 15 / 5}';
+
+    const program = createProgram(input);
+    const stmt = program.statements[0] as ExpressionStatement;
+    const hash = stmt.expression as HashLiteral;
+    expect(hash).toBeInstanceOf(HashLiteral);
+    expect(hash.pairs).toHaveLength(3);
+
+    const tests: Record<string, (e: Expression) => void> = {
+        one: (e: Expression) => testInfixExpression(e, 0, "+", 1),
+        two: (e: Expression) => testInfixExpression(e, 10, "-", 8),
+        three: (e: Expression) => testInfixExpression(e, 15, "/", 5),
+    };
+
+    for (const [key, value] of hash.pairs?.entries() ?? []) {
+        const literal = key as StringLiteral;
+        expect(literal).toBeInstanceOf(StringLiteral);
+
+        const testFunc = tests[literal.string()];
+        expect(testFunc).toBeDefined();
+
+        testFunc(value);
+    }
+});
+
 function createProgram(input: string) {
     const lexer = new Lexer(input);
     const parser = new Parser(lexer);
@@ -620,7 +670,7 @@ function testBooleanLiteral(exp: BooleanLiteral, value: boolean) {
     expect(exp.tokenLiteral()).toBe(`${value}`);
 }
 
-function testinfixExpression(
+function testInfixExpression(
     exp: InfixExpression,
     left: number | boolean | string,
     operator: string,

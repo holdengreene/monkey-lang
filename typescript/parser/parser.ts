@@ -234,7 +234,7 @@ export class Parser {
 
         const value = parseInt(this.curToken.literal);
 
-        if (!value) {
+        if (Number.isNaN(value)) {
             const msg = `could not parse ${this.curToken.literal} as integer`;
             this.errors.push(msg);
         }
