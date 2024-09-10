@@ -1,5 +1,6 @@
 import { expect, it } from "vitest";
 import {
+    ArrayLiteral,
     BooleanLiteral,
     CallExpression,
     Expression,
@@ -13,6 +14,7 @@ import {
     PrefixExpression,
     ProgramStatement,
     ReturnStatement,
+    StringLiteral,
 } from "../ast/ast.js";
 import { Lexer } from "../lexer/Lexer.js";
 import { Parser } from "./parser.js";
@@ -449,6 +451,44 @@ it("should parse call expression parameters", () => {
             expect(exp.arguments[index].string()).toBe(arg);
         }
     }
+});
+
+it("should test string literals", () => {
+    const input = '"hello world";';
+
+    const program = createProgram(input);
+    const stmt = program.statements[0] as ExpressionStatement;
+    const literal = stmt.expression as StringLiteral;
+    expect(literal).toBeInstanceOf(StringLiteral);
+    expect(literal.value).toBe("hello world");
+});
+
+it("should parse an empty array", () => {
+    const input = "[]";
+
+    const program = createProgram(input);
+    const stmt = program.statements[0] as ExpressionStatement;
+    const array = stmt.expression as ArrayLiteral;
+    expect(array).toBeInstanceOf(ArrayLiteral);
+    expect(array.elements).toHaveLength(0);
+});
+
+it("should parse array literals", () => {
+    const input = "[1, 2 * 2, 3 + 3]";
+
+    const program = createProgram(input);
+    const stmt = program.statements[0] as ExpressionStatement;
+    const array = stmt.expression as ArrayLiteral;
+    expect(array).toBeInstanceOf(ArrayLiteral);
+    expect(array.elements).toHaveLength(3);
+
+    if (!array.elements) {
+        throw new Error("array.elements is missing");
+    }
+
+    testIntegerLiteral(array.elements[0], 1);
+    testinfixExpression(array.elements[1], 2, "*", 2);
+    testinfixExpression(array.elements[2], 3, "+", 3);
 });
 
 function createProgram(input: string) {

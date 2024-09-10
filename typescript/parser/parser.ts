@@ -17,6 +17,7 @@ import {
     Program,
     ReturnStatement,
     Statement,
+    StringLiteral,
 } from "../ast/ast.js";
 import type { Lexer } from "../lexer/Lexer.js";
 import { tokenItem, TokenType, type Token } from "../token/token.js";
@@ -69,6 +70,7 @@ export class Parser {
         this.registerPrefix(tokenItem.LBRACE, this.parseHashLiteral);
         this.registerPrefix(tokenItem.IF, this.parseIfExpression);
         this.registerPrefix(tokenItem.FUNCTION, this.parseFunctionLiteral);
+        this.registerPrefix(tokenItem.STRING, this.parseStringLiteral);
 
         this.registerInfix(tokenItem.PLUS, this.parseInfixExpression);
         this.registerInfix(tokenItem.MINUS, this.parseInfixExpression);
@@ -474,6 +476,13 @@ export class Parser {
         }
 
         return block;
+    };
+
+    private parseStringLiteral = (): StringLiteral => {
+        return new StringLiteral({
+            token: this.curToken,
+            value: this.curToken.literal,
+        });
     };
 
     private registerPrefix(tokenType: TokenType, fn: PrefixFn): void {
