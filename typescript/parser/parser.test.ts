@@ -3,6 +3,7 @@ import {
     BooleanLiteral,
     Expression,
     ExpressionStatement,
+    FunctionLiteral,
     Identifier,
     IfExpression,
     InfixExpression,
@@ -321,6 +322,55 @@ it("should parse if else expressions", () => {
         throw new Error("alternative.expression is missing");
     }
     testIdentifier(alternative.expression, "y");
+});
+
+it("should parse functional literals", () => {
+    const input = "fn(x, y) { x + y; }";
+
+    const program = createProgram(input);
+    expect(program.statements).toHaveLength(1);
+
+    const stmt = program.statements[0] as ExpressionStatement;
+    expect(stmt).toBeInstanceOf(ExpressionStatement);
+
+    const func = stmt.expression as FunctionLiteral;
+    expect(func).toBeInstanceOf(FunctionLiteral);
+    expect(func.parameters).toHaveLength(2);
+
+    if (!func.parameters) {
+        throw new Error("parameters are missing");
+    }
+    testLiteralExpression(func.parameters[0], "x");
+    testLiteralExpression(func.parameters[1], "y");
+
+    expect(func.body?.statements).toHaveLength(1);
+
+    const bodyStmt = func.body?.statements?.[0] as ExpressionStatement;
+    expect(bodyStmt).toBeInstanceOf(ExpressionStatement);
+});
+
+it("should parse function parameters", () => {
+    const tests = [
+        { input: "fn() {};", expectedParams: [] },
+        { input: "fn(x) {};", expectedParams: ["x"] },
+        { input: "fn(x, y, z) {};", expectedParams: ["x", "y", "z"] },
+    ];
+
+    for (const test of tests) {
+        const program = createProgram(test.input);
+
+        const stmt = program.statements[0] as ExpressionStatement;
+        const func = stmt.expression as FunctionLiteral;
+        expect(func.parameters).toHaveLength(test.expectedParams.length);
+
+        if (!func.parameters) {
+            throw new Error("parameters are missing");
+        }
+
+        for (const [index, param] of test.expectedParams.entries()) {
+            testLiteralExpression(func.parameters[index], param);
+        }
+    }
 });
 
 function createProgram(input: string) {

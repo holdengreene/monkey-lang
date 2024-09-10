@@ -241,6 +241,7 @@ export class IfExpression extends Expression {
 
     constructor(ifExpressionNode: IfExpressionNode) {
         super({ token: ifExpressionNode.token });
+
         this.condition = ifExpressionNode.condition;
         this.consequence = ifExpressionNode.consequence;
         this.alternative = ifExpressionNode.alternative;
@@ -271,6 +272,7 @@ export class BlockStatement extends Statement {
 
     constructor(blockStatementNode: BlockStatementNode) {
         super({ token: blockStatementNode.token });
+
         this.statements = blockStatementNode.statements;
     }
 
@@ -281,6 +283,39 @@ export class BlockStatement extends Statement {
             out.push(stmt.string());
         }
 
+        return out.join("");
+    }
+}
+
+type FunctionLiteralNode = {
+    token?: Token;
+    parameters?: Identifier[];
+    body?: BlockStatement;
+};
+export class FunctionLiteral extends Expression {
+    public parameters?: Identifier[];
+    public body?: BlockStatement;
+
+    constructor(functionLiteralNode: FunctionLiteralNode) {
+        super({ token: functionLiteralNode.token });
+
+        this.parameters = functionLiteralNode.parameters;
+        this.body = functionLiteralNode.body;
+    }
+
+    public string(): string {
+        const out: string[] = [];
+        const params: string[] = [];
+
+        for (const param of this.parameters ?? []) {
+            out.push(param.string());
+        }
+
+        out.push(this.tokenLiteral());
+        out.push("(");
+        out.push(params.join(", "));
+        out.push(") ");
+        out.push(this.body?.string() ?? "");
         return out.join("");
     }
 }

@@ -5,6 +5,7 @@ import {
     CallExpression,
     Expression,
     ExpressionStatement,
+    FunctionLiteral,
     HashLiteral,
     Identifier,
     IfExpression,
@@ -67,6 +68,7 @@ export class Parser {
         this.registerPrefix(tokenItem.LBRACKET, this.parseArrayLiteral);
         this.registerPrefix(tokenItem.LBRACE, this.parseHashLiteral);
         this.registerPrefix(tokenItem.IF, this.parseIfExpression);
+        this.registerPrefix(tokenItem.FUNCTION, this.parseFunctionLiteral);
 
         this.registerInfix(tokenItem.PLUS, this.parseInfixExpression);
         this.registerInfix(tokenItem.MINUS, this.parseInfixExpression);
@@ -256,6 +258,57 @@ export class Parser {
         exp.right = this.parseExpression(precedence);
 
         return exp;
+    };
+
+    private parseFunctionLiteral = (): FunctionLiteral | undefined => {
+        const funcLit = new FunctionLiteral({ token: this.curToken });
+
+        if (!this.expectPeek(tokenItem.LPAREN)) {
+            return undefined;
+        }
+
+        funcLit.parameters = this.parseFunctionParameters();
+
+        if (!this.expectPeek(tokenItem.LBRACE)) {
+            return undefined;
+        }
+
+        funcLit.body = this.parseBlockStatement();
+
+        return funcLit;
+    };
+
+    private parseFunctionParameters = (): Identifier[] | undefined => {
+        const identifiers: Identifier[] = [];
+
+        if (this.peekTokenIs(tokenItem.RPAREN)) {
+            this.nextToken();
+            return identifiers;
+        }
+
+        this.nextToken();
+
+        const ident = new Identifier({
+            token: this.curToken,
+            value: this.curToken.literal,
+        });
+        identifiers.push(ident);
+
+        while (this.peekTokenIs(tokenItem.COMMA)) {
+            this.nextToken();
+            this.nextToken();
+            const ident = new Identifier({
+                token: this.curToken,
+                value: this.curToken.literal,
+            });
+            identifiers.push(ident);
+        }
+
+        if (!this.expectPeek(tokenItem.RPAREN)) {
+            return undefined;
+        }
+
+        return identifiers;
     };
 
     private parseGroupedExpression = (): Expression | undefined => {
