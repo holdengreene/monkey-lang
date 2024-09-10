@@ -1,6 +1,7 @@
 import { expect, it } from "vitest";
 import {
     BooleanLiteral,
+    CallExpression,
     Expression,
     ExpressionStatement,
     FunctionLiteral,
@@ -369,6 +370,83 @@ it("should parse function parameters", () => {
 
         for (const [index, param] of test.expectedParams.entries()) {
             testLiteralExpression(func.parameters[index], param);
+        }
+    }
+});
+
+it("should parse call expressions", () => {
+    const input = "add(1, 2 * 3, 4 + 5);";
+
+    const program = createProgram(input);
+    expect(program.statements).toHaveLength(1);
+
+    const stmt = program.statements[0] as ExpressionStatement;
+    expect(stmt).toBeInstanceOf(ExpressionStatement);
+
+    const exp = stmt.expression as CallExpression;
+    expect(exp).toBeInstanceOf(CallExpression);
+
+    if (!exp.function) {
+        throw new Error("exp.function is missing");
+    }
+
+    testIdentifier(exp.function, "add");
+
+    expect(exp.arguments).toHaveLength(3);
+
+    if (!exp.arguments) {
+        throw new Error("exp.arguments is missing");
+    }
+
+    testLiteralExpression(exp.arguments[0], 1);
+    testinfixExpression(exp.arguments[1], 2, "*", 3);
+    testinfixExpression(exp.arguments[2], 4, "+", 5);
+});
+
+it("should parse call expression parameters", () => {
+    type CETest = {
+        input: string;
+        expectedIdent: string;
+        expectedArgs: string[];
+    };
+    const tests: CETest[] = [
+        {
+            input: "add();",
+            expectedIdent: "add",
+            expectedArgs: [],
+        },
+        {
+            input: "add(1);",
+            expectedIdent: "add",
+            expectedArgs: ["1"],
+        },
+        {
+            input: "add(1, 2 * 3, 4 + 5);",
+            expectedIdent: "add",
+            expectedArgs: ["1", "(2 * 3)", "(4 + 5)"],
+        },
+    ];
+
+    for (const test of tests) {
+        const program = createProgram(test.input);
+
+        const stmt = program.statements[0] as ExpressionStatement;
+        const exp = stmt.expression as CallExpression;
+        expect(exp).toBeInstanceOf(CallExpression);
+
+        if (!exp.function) {
+            throw new Error("exp.function is missing");
+        }
+
+        testIdentifier(exp.function, test.expectedIdent);
+        expect(exp.arguments).toHaveLength(test.expectedArgs.length);
+
+        if (!exp.arguments) {
+            throw new Error("exp.arguments is missing");
+        }
+
+        for (const [index, arg] of test.expectedArgs.entries()) {
+            expect(exp.arguments[index].string()).toBe(arg);
         }
     }
 });
