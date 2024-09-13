@@ -14,7 +14,6 @@ import {
     IntegerLiteral,
     LetStatement,
     PrefixExpression,
-    type ProgramStatement,
     ReturnStatement,
     StringLiteral,
 } from "../ast/ast.js";
@@ -632,7 +631,7 @@ function createProgram(input: string) {
     return program;
 }
 
-function testLetStatement(statement: ProgramStatement, name: string) {
+function testLetStatement(statement: LetStatement, name: string) {
     expect(statement).toBeInstanceOf(LetStatement);
     expect(statement.tokenLiteral()).toBe("let");
     expect(statement.name?.value).toBe(name);

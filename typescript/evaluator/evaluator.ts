@@ -2,8 +2,8 @@ import {
     ExpressionStatement,
     IntegerLiteral,
     Program,
+    Statement,
     type ASTNode,
-    type ProgramStatement,
 } from "../ast/ast.js";
 import type { Environment } from "../object/environment.js";
 import { Integer, ObjectType, type MObject } from "../object/object.js";
@@ -17,18 +17,18 @@ export function evaluator(
         case node instanceof Program && node.statements.length > 0:
             return evalProgram(node.statements, env);
         case node instanceof ExpressionStatement:
-            return evaluator(node.expression, env);
+            return evaluator(node.expression!, env);
 
         // Expressions
         case node instanceof IntegerLiteral:
-            return new Integer(+node.value);
+            return new Integer(+node.value!);
     }
 
     return undefined;
 }
 
 function evalProgram(
-    stmts: ProgramStatement[],
+    stmts: Statement[],
     env: Environment,
 ): MObject | undefined {
     let result: MObject | undefined = undefined;

@@ -7,9 +7,8 @@ export type ASTNode = {
 
 type Value = string | number | boolean;
 
-export type ProgramStatement = Record<string, any>;
 export class Program implements ASTNode {
-    constructor(public statements: ProgramStatement[]) {}
+    constructor(public statements: Statement[]) {}
 
     public tokenLiteral(): string {
         if (this.statements.length > 0) {
