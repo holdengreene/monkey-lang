@@ -7,54 +7,54 @@ export type Token = {
     literal: string;
 };
 
-export const tokenItem = {
-    ILLEGAL: "ILLEGAL",
-    EOF: "EOF",
-    IDENT: "IDENT",
-    INT: "INT",
-    STRING: "STRING",
-    ASSIGN: "=",
-    PLUS: "+",
-    MINUS: "-",
-    BANG: "!",
-    ASTERISK: "*",
-    SLASH: "/",
-    LT: "<",
-    GT: ">",
-    EQ: "==",
-    NOT_EQ: "!=",
-    COMMA: ",",
-    SEMICOLON: ";",
-    LPAREN: "(",
-    RPAREN: ")",
-    LBRACE: "{",
-    RBRACE: "}",
-    LBRACKET: "[",
-    RBRACKET: "]",
-    COLON: ":",
-    FUNCTION: "FUNCTION",
-    LET: "LET",
-    TRUE: "TRUE",
-    FALSE: "FALSE",
-    IF: "IF",
-    ELSE: "ELSE",
-    RETURN: "RETURN",
-} as const;
+export enum TokenItem {
+    ILLEGAL = "ILLEGAL",
+    EOF = "EOF",
+    IDENT = "IDENT",
+    INT = "INT",
+    STRING = "STRING",
+    ASSIGN = "=",
+    PLUS = "+",
+    MINUS = "-",
+    BANG = "!",
+    ASTERISK = "*",
+    SLASH = "/",
+    LT = "<",
+    GT = ">",
+    EQ = "==",
+    NOT_EQ = "!=",
+    COMMA = ",",
+    SEMICOLON = ";",
+    LPAREN = "(",
+    RPAREN = ")",
+    LBRACE = "{",
+    RBRACE = "}",
+    LBRACKET = "[",
+    RBRACKET = "]",
+    COLON = ":",
+    FUNCTION = "FUNCTION",
+    LET = "LET",
+    TRUE = "TRUE",
+    FALSE = "FALSE",
+    IF = "IF",
+    ELSE = "ELSE",
+    RETURN = "RETURN",
+}
 
-const keywords = {
-    fn: tokenItem.FUNCTION,
-    let: tokenItem.LET,
-    true: tokenItem.TRUE,
-    false: tokenItem.FALSE,
-    if: tokenItem.IF,
-    else: tokenItem.ELSE,
-    return: tokenItem.RETURN,
-} as const;
+enum keywords {
+    fn = TokenItem.FUNCTION,
+    let = TokenItem.LET,
+    true = TokenItem.TRUE,
+    false = TokenItem.FALSE,
+    if = TokenItem.IF,
+    else = TokenItem.ELSE,
+    return = TokenItem.RETURN,
+}
 
 export function lookupIdent(ident: string): TokenType {
     if (Object.hasOwn(keywords, ident)) {
         return keywords[ident as KeywordKey];
     }
 
-    return tokenItem.IDENT;
+    return TokenItem.IDENT;
 }

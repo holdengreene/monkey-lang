@@ -1,4 +1,4 @@
-import { lookupIdent, type Token, tokenItem } from "../token/token.js";
+import { lookupIdent, type Token, TokenItem } from "../token/token.js";
 
 type chType = string | number;
 
@@ -28,72 +28,72 @@ export class Lexer {
                     const ch = this.ch;
                     this.readChar();
                     const literal = `${ch}${this.ch}`;
-                    tok = { type: tokenItem.EQ, literal };
+                    tok = { type: TokenItem.EQ, literal };
                 } else {
-                    tok = this.newToken(tokenItem.ASSIGN, this.ch);
+                    tok = this.newToken(TokenItem.ASSIGN, this.ch);
                 }
                 break;
             case "+":
-                tok = this.newToken(tokenItem.PLUS, this.ch);
+                tok = this.newToken(TokenItem.PLUS, this.ch);
                 break;
             case "-":
-                tok = this.newToken(tokenItem.MINUS, this.ch);
+                tok = this.newToken(TokenItem.MINUS, this.ch);
                 break;
             case "!":
                 if (this.peekChar() === "=") {
                     const ch = this.ch;
                     this.readChar();
                     const literal = `${ch}${this.ch}`;
-                    tok = { type: tokenItem.NOT_EQ, literal };
+                    tok = { type: TokenItem.NOT_EQ, literal };
                 } else {
-                    tok = this.newToken(tokenItem.BANG, this.ch);
+                    tok = this.newToken(TokenItem.BANG, this.ch);
                 }
                 break;
             case "/":
-                tok = this.newToken(tokenItem.SLASH, this.ch);
+                tok = this.newToken(TokenItem.SLASH, this.ch);
                 break;
             case "*":
-                tok = this.newToken(tokenItem.ASTERISK, this.ch);
+                tok = this.newToken(TokenItem.ASTERISK, this.ch);
                 break;
             case "<":
-                tok = this.newToken(tokenItem.LT, this.ch);
+                tok = this.newToken(TokenItem.LT, this.ch);
                 break;
             case ">":
-                tok = this.newToken(tokenItem.GT, this.ch);
+                tok = this.newToken(TokenItem.GT, this.ch);
                 break;
             case ";":
-                tok = this.newToken(tokenItem.SEMICOLON, this.ch);
+                tok = this.newToken(TokenItem.SEMICOLON, this.ch);
                 break;
             case ",":
-                tok = this.newToken(tokenItem.COMMA, this.ch);
+                tok = this.newToken(TokenItem.COMMA, this.ch);
                 break;
             case "(":
-                tok = this.newToken(tokenItem.LPAREN, this.ch);
+                tok = this.newToken(TokenItem.LPAREN, this.ch);
                 break;
             case ")":
-                tok = this.newToken(tokenItem.RPAREN, this.ch);
+                tok = this.newToken(TokenItem.RPAREN, this.ch);
                 break;
             case "{":
-                tok = this.newToken(tokenItem.LBRACE, this.ch);
+                tok = this.newToken(TokenItem.LBRACE, this.ch);
                 break;
             case "}":
-                tok = this.newToken(tokenItem.RBRACE, this.ch);
+                tok = this.newToken(TokenItem.RBRACE, this.ch);
                 break;
             case "[":
-                tok = this.newToken(tokenItem.LBRACKET, this.ch);
+                tok = this.newToken(TokenItem.LBRACKET, this.ch);
                 break;
             case "]":
-                tok = this.newToken(tokenItem.RBRACKET, this.ch);
+                tok = this.newToken(TokenItem.RBRACKET, this.ch);
                 break;
             case ":":
-                tok = this.newToken(tokenItem.COLON, this.ch);
+                tok = this.newToken(TokenItem.COLON, this.ch);
                 break;
             case 0:
                 tok.literal = "";
-                tok.type = tokenItem.EOF;
+                tok.type = TokenItem.EOF;
                 break;
             case '"':
-                tok.type = tokenItem.STRING;
+                tok.type = TokenItem.STRING;
                 tok.literal = this.readString();
                 break;
             default:
@@ -103,12 +103,12 @@ export class Lexer {
 
                     return tok;
                 } else if (this.isDigit(this.ch)) {
-                    tok.type = tokenItem.INT;
+                    tok.type = TokenItem.INT;
                     tok.literal = this.readNumber();
 
                     return tok;
                 } else {
-                    tok = this.newToken(tokenItem.ILLEGAL, this.ch);
+                    tok = this.newToken(TokenItem.ILLEGAL, this.ch);
                 }
         }
 

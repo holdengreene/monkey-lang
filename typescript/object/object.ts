@@ -21,7 +21,7 @@ type HashKey = {
     value: number;
 };
 
-export class Integer implements MObject {
+export class IntegerObj implements MObject {
     constructor(public value: number) {}
 
     public inspect(): string {
@@ -34,5 +34,51 @@ export class Integer implements MObject {
 
     public hashKey(): HashKey {
         return { oType: this.type(), value: this.value };
+    }
+}
+
+export class ErrorObj implements MObject {
+    constructor(public message: string) {}
+
+    public type(): ObjectType {
+        return ObjectType.ERROR_OBJ;
+    }
+
+    public inspect(): string {
+        return `Error: ${this.message}`;
+    }
+}
+
+export class BooleanObj implements MObject {
+    constructor(public value: boolean) {}
+
+    public type(): ObjectType {
+        return ObjectType.BOOLEAN_OBJ;
+    }
+
+    public inspect(): string {
+        return `${this.value}`;
+    }
+
+    public hashKey(): HashKey {
+        let value: number;
+
+        if (this.value) {
+            value = 1;
+        } else {
+            value = 0;
+        }
+
+        return { oType: this.type(), value };
+    }
+}
+
+export class NullObj implements MObject {
+    public type(): ObjectType {
+        return ObjectType.NULL_OBJ;
+    }
+
+    public inspect(): string {
+        return "null";
     }
 }
