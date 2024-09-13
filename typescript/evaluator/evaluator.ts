@@ -1,5 +1,6 @@
 import {
     ExpressionStatement,
+    InfixExpression,
     IntegerLiteral,
     PrefixExpression,
     Program,
@@ -26,7 +27,7 @@ export function evaluator(
 ): MObject | undefined {
     switch (true) {
         // Statements
-        case node instanceof Program && node.statements.length > 0:
+        case node instanceof Program:
             return evalProgram(node.statements, env);
         case node instanceof ExpressionStatement:
             return evaluator(node.expression!, env);
@@ -34,13 +35,27 @@ export function evaluator(
         // Expressions
         case node instanceof IntegerLiteral:
             return new IntegerObj(+node.value!);
-        case node instanceof PrefixExpression:
+        case node instanceof PrefixExpression: {
             const right = evaluator(node.right!, env);
             if (isError(right)) {
                 return right;
             }
 
             return evalPrefixExpression(node.operator, right);
+        }
+        case node instanceof InfixExpression: {
+            const left = evaluator(node.left!, env);
+            if (isError(left)) {
+                return left;
+            }
+
+            const right = evaluator(node.right!, env);
+            if (isError(right)) {
+                return right;
+            }
+
+            return evalInfixExpression(node.operator, left, right);
+        }
     }
 
     return undefined;
@@ -80,6 +95,77 @@ function evalPrefixExpression(operator?: string, right?: MObject): MObject {
     }
 }
 
+function evalInfixExpression(
+    operator?: string,
+    left?: MObject,
+    right?: MObject,
+): MObject {
+    switch (true) {
+        case left?.type() === ObjectType.INTEGER_OBJ:
+        case right?.type() === ObjectType.INTEGER_OBJ:
+            return evalIntegerInfixExpression(
+                operator,
+                left as IntegerObj,
+                right as IntegerObj,
+            );
+        case operator === "==":
+            return nativeBooleanToBooleanObject(left == right);
+        case operator === "!=":
+            return nativeBooleanToBooleanObject(left != right);
+        case left?.type() !== right?.type():
+            return newError(
+                `type mismatch: ${left?.type()} ${operator} ${right?.type()}`,
+            );
+        case left?.type() === ObjectType.STRING_OBJ:
+        case right?.type() === ObjectType.STRING_OBJ:
+            break;
+        default:
+            return newError(
+                `unknown operator ${left?.type()} ${operator} ${right?.type()}`,
+            );
+    }
+}
+
+function evalIntegerInfixExpression(
+    operator?: string,
+    left?: IntegerObj,
+    right?: IntegerObj,
+): MObject {
+    const leftVal = left?.value;
+    const rightVal = right?.value;
+
+    if (!leftVal) {
+        return newError(`missing leftVal ${leftVal}`);
+    }
+
+    if (!rightVal) {
+        return newError(`missing rightVal ${rightVal}`);
+    }
+
+    switch (operator) {
+        case "+":
+            return new IntegerObj(leftVal + rightVal);
+        case "-":
+            return new IntegerObj(leftVal - rightVal);
+        case "*":
+            return new IntegerObj(leftVal * rightVal);
+        case "/":
+            return new IntegerObj(leftVal / rightVal);
+        case "<":
+            return nativeBooleanToBooleanObject(leftVal < rightVal);
+        case ">":
+            return nativeBooleanToBooleanObject(leftVal > rightVal);
+        case "==":
+            return nativeBooleanToBooleanObject(leftVal == rightVal);
+        case "!=":
+            return nativeBooleanToBooleanObject(leftVal != rightVal);
+        default:
+            return newError(
+                `unknown operator ${left.type()} ${operator}, ${right.type()}`,
+            );
+    }
+}
+
 function evalBangOperatorExpression(right?: MObject): MObject {
     switch (right) {
         case TRUE:
@@ -103,6 +189,14 @@ function evalMinusPrefixOperatorExpression(right?: MObject): MObject {
 
     const value = right.value;
     return new IntegerObj(-value);
+}
+
+function nativeBooleanToBooleanObject(input: boolean): BooleanObj {
+    if (input) {
+        return TRUE;
+    } else {
+        return FALSE;
+    }
 }
 
 function newError(msg: string) {
