@@ -1,4 +1,4 @@
-import { assert, expect, it } from "vitest";
+import { expect, it } from "vitest";
 import { tokenItem } from "../token/token.js";
 import { Lexer } from "./Lexer.js";
 

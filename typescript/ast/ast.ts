@@ -1,6 +1,6 @@
 import { type Token } from "../token/token.js";
 
-type ASTNode = {
+export type ASTNode = {
     tokenLiteral(): string;
     string(): string;
 };
