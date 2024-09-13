@@ -457,7 +457,10 @@ type BooleanLiteralNode = {
     value?: boolean;
 };
 export class BooleanLiteral extends Expression {
+    public value?: boolean;
+
     constructor(booleanNode: BooleanLiteralNode) {
-        super(booleanNode);
+        super({ token: booleanNode.token });
+        this.value = booleanNode.value;
     }
 }

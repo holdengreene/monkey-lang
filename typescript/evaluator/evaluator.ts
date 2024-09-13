@@ -1,4 +1,5 @@
 import {
+    BooleanLiteral,
     ExpressionStatement,
     InfixExpression,
     IntegerLiteral,
@@ -35,6 +36,8 @@ export function evaluator(
         // Expressions
         case node instanceof IntegerLiteral:
             return new IntegerObj(+node.value!);
+        case node instanceof BooleanLiteral:
+            return nativeBooleanToBooleanObject(node.value!)
         case node instanceof PrefixExpression: {
             const right = evaluator(node.right!, env);
             if (isError(right)) {
