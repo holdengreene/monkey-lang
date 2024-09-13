@@ -2,7 +2,6 @@ import {
     ExpressionStatement,
     IntegerLiteral,
     Program,
-    type Statement,
     type ASTNode,
     type ProgramStatement,
 } from "../ast/ast.js";
@@ -36,10 +35,8 @@ function evalProgram(
 
     for (const statement of stmts) {
         result = evaluator(statement, env);
-        console.log("result", result);
 
         if (result) {
-            console.log("runn this world");
             const rt = result.type();
             if (
                 rt === ObjectType.RETURN_VALUE_OBJ ||

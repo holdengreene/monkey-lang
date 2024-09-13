@@ -34,7 +34,7 @@ type ExpressionNode = {
     token?: Token;
     value?: Value;
 };
-export class Expression implements ASTNode {
+export abstract class Expression implements ASTNode {
     public token?: Token;
     public value?: Value;
 
@@ -56,7 +56,7 @@ type StatementNode = {
     token?: Token;
     value?: string | Expression;
 };
-export class Statement implements ASTNode {
+export abstract class Statement implements ASTNode {
     public token?: Token;
     public value?: string | Expression;
 

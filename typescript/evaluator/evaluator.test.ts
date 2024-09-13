@@ -13,7 +13,6 @@ it("should evaluate integer expressions", () => {
 
     for (const test of tests) {
         const evaluated = testEval(test.input);
-        console.log('eval: ', evaluated);
         testIntegerObject(evaluated, test.expected);
     }
 });

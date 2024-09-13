@@ -3,7 +3,7 @@ import {
     ArrayLiteral,
     BooleanLiteral,
     CallExpression,
-    Expression,
+    type Expression,
     ExpressionStatement,
     FunctionLiteral,
     HashLiteral,
@@ -14,7 +14,7 @@ import {
     IntegerLiteral,
     LetStatement,
     PrefixExpression,
-    ProgramStatement,
+    type ProgramStatement,
     ReturnStatement,
     StringLiteral,
 } from "../ast/ast.js";

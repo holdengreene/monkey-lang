@@ -3,7 +3,7 @@ import {
     BlockStatement,
     BooleanLiteral,
     CallExpression,
-    Expression,
+    type Expression,
     ExpressionStatement,
     FunctionLiteral,
     HashLiteral,
@@ -16,11 +16,11 @@ import {
     PrefixExpression,
     Program,
     ReturnStatement,
-    Statement,
+    type Statement,
     StringLiteral,
 } from "../ast/ast.js";
 import type { Lexer } from "../lexer/Lexer.js";
-import { tokenItem, TokenType, type Token } from "../token/token.js";
+import { type Token, tokenItem, type TokenType } from "../token/token.js";
 
 type PrefixFn = () => Expression | undefined;
 type InfixFn = (arg?: Expression) => Expression | undefined;
