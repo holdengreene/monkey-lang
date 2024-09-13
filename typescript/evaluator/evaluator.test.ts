@@ -3,7 +3,7 @@ import { Lexer } from "../lexer/Lexer.js";
 import { Environment } from "../object/environment.js";
 import { BooleanObj, IntegerObj, type MObject } from "../object/object.js";
 import { Parser } from "../parser/parser.js";
-import { evaluator } from "./evaluator.js";
+import { evaluator, NULL } from "./evaluator.js";
 
 it("should evaluate integer expressions", () => {
     const tests: { input: string; expected: number }[] = [
@@ -59,6 +59,44 @@ it("should evaluate boolean expressions", () => {
     }
 });
 
+it("should test the bang operator", () => {
+    const tests: { input: string; expected: boolean }[] = [
+        { input: "!true", expected: false },
+        { input: "!false", expected: true },
+        { input: "!5", expected: false },
+        { input: "!!true", expected: true },
+        { input: "!!false", expected: false },
+        { input: "!!5", expected: true },
+    ];
+
+    for (const test of tests) {
+        const evaluated = testEval(test.input);
+        testBooleanObject(evaluated, test.expected);
+    }
+});
+
+it("should test if else expressions", () => {
+    const tests: { input: string; expected: number | null }[] = [
+        { input: "if (true) { 10 }", expected: 10 },
+        { input: "if (false) { 10 }", expected: null },
+        { input: "if (1) { 10 }", expected: 10 },
+        { input: "if (1 < 2) { 10 }", expected: 10 },
+        { input: "if (1 > 2) { 10 }", expected: null },
+        { input: "if (1 > 2) { 10 } else { 20 }", expected: 20 },
+        { input: "if (1 < 2) { 10 } else { 20 }", expected: 10 },
+    ];
+
+    for (const test of tests) {
+        const evaluated = testEval(test.input);
+
+        if (typeof test.expected === "number") {
+            testIntegerObject(evaluated, test.expected);
+        } else {
+            testNullObject(evaluated);
+        }
+    }
+});
+
 function testEval(input: string) {
     const lexer = new Lexer(input);
     const parser = new Parser(lexer);
@@ -78,4 +116,8 @@ function testBooleanObject(obj: MObject | undefined, expected: boolean) {
     const result = obj as BooleanObj;
     expect(result).toBeInstanceOf(BooleanObj);
     expect(result.value).toBe(expected);
+}
+
+function testNullObject(obj: MObject | undefined) {
+    expect(obj).toStrictEqual(NULL);
 }

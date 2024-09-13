@@ -1,6 +1,8 @@
 import {
+    BlockStatement,
     BooleanLiteral,
     ExpressionStatement,
+    IfExpression,
     InfixExpression,
     IntegerLiteral,
     PrefixExpression,
@@ -18,7 +20,7 @@ import {
     type MObject,
 } from "../object/object.js";
 
-const NULL = new NullObj();
+export const NULL = new NullObj();
 const TRUE = new BooleanObj(true);
 const FALSE = new BooleanObj(false);
 
@@ -37,7 +39,7 @@ export function evaluator(
         case node instanceof IntegerLiteral:
             return new IntegerObj(+node.value!);
         case node instanceof BooleanLiteral:
-            return nativeBooleanToBooleanObject(node.value!)
+            return nativeBooleanToBooleanObject(node.value!);
         case node instanceof PrefixExpression: {
             const right = evaluator(node.right!, env);
             if (isError(right)) {
@@ -59,6 +61,10 @@ export function evaluator(
 
             return evalInfixExpression(node.operator, left, right);
         }
+        case node instanceof BlockStatement:
+            return evalBlockStatement(node, env);
+        case node instanceof IfExpression:
+            return evalIfExpression(node, env);
     }
 
     return undefined;
@@ -169,6 +175,48 @@ function evalIntegerInfixExpression(
     }
 }
 
+function evalIfExpression(
+    ifExpress: IfExpression,
+    env: Environment,
+): MObject | undefined {
+    const condition = evaluator(ifExpress.condition!, env);
+
+    if (isError(condition)) {
+        return condition;
+    }
+
+    if (isTruthy(condition)) {
+        return evaluator(ifExpress.consequence!, env);
+    } else if (ifExpress.alternative) {
+        return evaluator(ifExpress.alternative!, env);
+    } else {
+        return NULL;
+    }
+}
+
+function evalBlockStatement(
+    block: BlockStatement,
+    env: Environment,
+): MObject | undefined {
+    let result: MObject | undefined = undefined;
+
+    for (const statement of block.statements ?? []) {
+        result = evaluator(statement, env);
+
+        if (result) {
+            const rt = result.type();
+            if (
+                rt === ObjectType.RETURN_VALUE_OBJ ||
+                rt === ObjectType.ERROR_OBJ
+            ) {
+                return result;
+            }
+        }
+    }
+
+    return result;
+}
+
 function evalBangOperatorExpression(right?: MObject): MObject {
     switch (right) {
         case TRUE:
@@ -192,6 +240,19 @@ function evalMinusPrefixOperatorExpression(right?: MObject): MObject {
 
     const value = right.value;
     return new IntegerObj(-value);
+}
+
+function isTruthy(obj?: MObject): boolean {
+    switch (obj) {
+        case NULL:
+            return false;
+        case TRUE:
+            return true;
+        case FALSE:
+            return false;
+        default:
+            return true;
+    }
 }
 
 function nativeBooleanToBooleanObject(input: boolean): BooleanObj {
