@@ -1,4 +1,5 @@
 import {
+    ArrayLiteral,
     BlockStatement,
     BooleanLiteral,
     CallExpression,
@@ -7,6 +8,7 @@ import {
     FunctionLiteral,
     Identifier,
     IfExpression,
+    IndexExpression,
     InfixExpression,
     IntegerLiteral,
     LetStatement,
@@ -22,6 +24,7 @@ import {
     type Environment,
 } from "../object/environment.js";
 import {
+    ArrayObj,
     BooleanObj,
     ErrorObj,
     FunctionObj,
@@ -123,6 +126,28 @@ export function evaluator(
             }
 
             return applyFunction(func!, args);
+
+        case node instanceof ArrayLiteral:
+            const elements = evalExpressions(node.elements!, env);
+
+            if (elements.length === 1 && isError(elements[0])) {
+                return elements[0];
+            }
+
+            return new ArrayObj(elements);
+
+        case node instanceof IndexExpression:
+            const left = evaluator(node.left!, env);
+            if (isError(left)) {
+                return left;
+            }
+
+            const index = evaluator(node.index!, env);
+            if (isError(index)) {
+                return index;
+            }
+
+            return evalIndexExpression(left, index);
     }
 
     return undefined;
@@ -164,15 +189,8 @@ function evalInfixExpression(
     left?: MObject,
     right?: MObject,
 ): MObject {
-    if (
-        left instanceof IntegerObj &&
-        right instanceof IntegerObj
-    ) {
-        return evalIntegerInfixExpression(
-            operator,
-            left,
-            right,
-        );
+    if (left instanceof IntegerObj && right instanceof IntegerObj) {
+        return evalIntegerInfixExpression(operator, left, right);
     }
 
     if (operator === "==") {
@@ -252,6 +270,28 @@ function evalStringInfixExpression(
     const leftVal = left.value;
     const rightVal = right.value;
     return new StringObj(leftVal + rightVal);
+}
+
+function evalIndexExpression(left: MObject, index: MObject): MObject {
+    if (left instanceof ArrayObj && index instanceof IntegerObj) {
+        return evalArrayIndexExpression(left, index);
+    }
+
+    return newError(`Index operator not supported: ${left.type()}`);
+}
+
+function evalArrayIndexExpression(
+    arrayObj: ArrayObj,
+    index: IntegerObj,
+): MObject {
+    const idx = index.value;
+    const max = arrayObj.elements.length - 1;
+
+    if (idx < 0 || idx > max) {
+        return NULL;
+    }
+
+    return arrayObj.elements[idx];
 }
 
 function evalIfExpression(

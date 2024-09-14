@@ -2,6 +2,7 @@ import { expect, it } from "vitest";
 import { Lexer } from "../lexer/Lexer.js";
 import { newEnvironment } from "../object/environment.js";
 import {
+    ArrayObj,
     BooleanObj,
     FunctionObj,
     IntegerObj,
@@ -151,6 +152,8 @@ it("should evaluate return statements", () => {
     }
 });
 
+it("should handle errors", () => {});
+
 it("should evaluate let statements", () => {
     const tests: TestsNumber = [
         { input: "let a = 5; a;", expected: 5 },
@@ -231,20 +234,87 @@ it("should properly closure it up", () => {
 it("should evaluate string literals", () => {
     const input = '"Hello World!"';
 
-    const evaluated = testEval(input);
-    const str = evaluated as StringObj;
+    const str = testEval(input) as StringObj;
     expect(str).toBeInstanceOf(StringObj);
     expect(str.value).toBe("Hello World!");
 });
 
-it ("should concatenate strings", () => {
+it("should concatenate strings", () => {
     const input = '"Hello" + " " + "World!"';
 
-    const evaluated = testEval(input);
-    const str = evaluated as StringObj;
+    const str = testEval(input) as StringObj;
     expect(str).toBeInstanceOf(StringObj);
     expect(str.value).toBe("Hello World!");
-})
+});
+
+it("should call builtin functions", () => {});
+
+it("should evaluate array literals", () => {
+    const input = "[1, 2 * 2, 3 + 3]";
+
+    const arrayLit = testEval(input) as ArrayObj;
+    expect(arrayLit).toBeInstanceOf(ArrayObj);
+    expect(arrayLit.elements).toHaveLength(3);
+
+    testIntegerObject(arrayLit.elements[0], 1);
+    testIntegerObject(arrayLit.elements[1], 4);
+    testIntegerObject(arrayLit.elements[2], 6);
+});
+
+it("should allow for array index expressions", () => {
+    const tests: { input: string; expected: number | null }[] = [
+        {
+            input: "[1, 2, 3][0]",
+            expected: 1,
+        },
+        {
+            input: "[1, 2, 3][1]",
+            expected: 2,
+        },
+        {
+            input: "[1, 2, 3][2]",
+            expected: 3,
+        },
+        {
+            input: "let i = 0; [1][i];",
+            expected: 1,
+        },
+        {
+            input: "[1, 2, 3][1 + 1];",
+            expected: 3,
+        },
+        {
+            input: "let myArray = [1, 2, 3]; myArray[2];",
+            expected: 3,
+        },
+        {
+            input: "let myArray = [1, 2, 3]; myArray[0] + myArray[1] + myArray[2];",
+            expected: 6,
+        },
+        {
+            input: "let myArray = [1, 2, 3]; let i = myArray[0]; myArray[i]",
+            expected: 2,
+        },
+        {
+            input: "[1, 2, 3][3]",
+            expected: null,
+        },
+        {
+            input: "[1, 2, 3][-1]",
+            expected: null,
+        },
+    ];
+
+    for (const test of tests) {
+        const evaluated = testEval(test.input);
+
+        if (typeof test.expected === "number") {
+            testIntegerObject(evaluated, test.expected);
+        } else {
+            testNullObject(evaluated);
+        }
+    }
+});
 
 function testEval(input: string) {
     const lexer = new Lexer(input);

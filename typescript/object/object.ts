@@ -147,3 +147,25 @@ export class FunctionObj implements MObject {
         return out.join("");
     }
 }
+
+export class ArrayObj implements MObject {
+    constructor(public elements: MObject[]) {}
+
+    public type(): ObjectType {
+        return ObjectType.ARRAY_OBJ;
+    }
+
+    public inspect(): string {
+        const out: string[] = [];
+        const elements: string[] = [];
+
+        for (const elem of this.elements) {
+            elements.push(elem.inspect());
+        }
+
+        out.push("[");
+        out.push(elements.join(", "));
+        out.push("]");
+        return out.join("");
+    }
+}
