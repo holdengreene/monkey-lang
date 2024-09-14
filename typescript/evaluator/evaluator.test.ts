@@ -120,25 +120,25 @@ it("should evaluate return statements", () => {
 			}`,
             expected: 10,
         },
-        // {
-        //     input: `
-        // 	let f = fn(x) {
-        // 	return x;
-        // 	x + 10;
-        // 	};
-        // 	f(10);`,
-        //     expected: 10,
-        // },
-        // {
-        //     input: `
-        // 	let f = fn(x) {
-        // 	let result = x + 10;
-        // 	return result;
-        // 	return 10;
-        // 	};
-        // 	f(10);`,
-        //     expected: 20,
-        // },
+        {
+            input: `
+        	let f = fn(x) {
+        	return x;
+        	x + 10;
+        	};
+        	f(10);`,
+            expected: 10,
+        },
+        {
+            input: `
+        	let f = fn(x) {
+        	let result = x + 10;
+        	return result;
+        	return 10;
+        	};
+        	f(10);`,
+            expected: 20,
+        },
     ];
 
     for (const test of tests) {
