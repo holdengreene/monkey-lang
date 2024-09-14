@@ -5,6 +5,7 @@ import {
     BooleanObj,
     FunctionObj,
     IntegerObj,
+    StringObj,
     type MObject,
 } from "../object/object.js";
 import { Parser } from "../parser/parser.js";
@@ -226,6 +227,24 @@ it("should properly closure it up", () => {
 
     testIntegerObject(testEval(input), 4);
 });
+
+it("should evaluate string literals", () => {
+    const input = '"Hello World!"';
+
+    const evaluated = testEval(input);
+    const str = evaluated as StringObj;
+    expect(str).toBeInstanceOf(StringObj);
+    expect(str.value).toBe("Hello World!");
+});
+
+it ("should concatenate strings", () => {
+    const input = '"Hello" + " " + "World!"';
+
+    const evaluated = testEval(input);
+    const str = evaluated as StringObj;
+    expect(str).toBeInstanceOf(StringObj);
+    expect(str.value).toBe("Hello World!");
+})
 
 function testEval(input: string) {
     const lexer = new Lexer(input);

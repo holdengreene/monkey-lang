@@ -452,8 +452,11 @@ type StringLiteralNode = {
     value?: string;
 };
 export class StringLiteral extends Expression {
+    public value?: string;
+
     constructor(stringLiteralNode: StringLiteralNode) {
-        super(stringLiteralNode);
+        super({ token: stringLiteralNode.token });
+        this.value = stringLiteralNode.value;
     }
 }
 

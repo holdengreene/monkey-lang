@@ -76,6 +76,18 @@ export class BooleanObj implements MObject {
     }
 }
 
+export class StringObj implements MObject {
+    constructor(public value: string) {}
+
+    public type(): ObjectType {
+        return ObjectType.STRING_OBJ;
+    }
+
+    public inspect(): string {
+        return this.value;
+    }
+}
+
 export class NullObj implements MObject {
     public type(): ObjectType {
         return ObjectType.NULL_OBJ;

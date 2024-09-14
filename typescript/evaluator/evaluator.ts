@@ -14,6 +14,7 @@ import {
     Program,
     ReturnStatement,
     Statement,
+    StringLiteral,
     type ASTNode,
 } from "../ast/ast.js";
 import {
@@ -28,6 +29,7 @@ import {
     NullObj,
     ObjectType,
     ReturnValueObj,
+    StringObj,
     type MObject,
 } from "../object/object.js";
 
@@ -71,6 +73,9 @@ export function evaluator(
 
         case node instanceof BooleanLiteral:
             return nativeBooleanToBooleanObject(node.value!);
+
+        case node instanceof StringLiteral:
+            return new StringObj(node.value!);
 
         case node instanceof PrefixExpression: {
             const right = evaluator(node.right!, env);
@@ -160,13 +165,13 @@ function evalInfixExpression(
     right?: MObject,
 ): MObject {
     if (
-        left?.type() === ObjectType.INTEGER_OBJ &&
-        left?.type() === ObjectType.INTEGER_OBJ
+        left instanceof IntegerObj &&
+        right instanceof IntegerObj
     ) {
         return evalIntegerInfixExpression(
             operator,
-            left as IntegerObj,
-            right as IntegerObj,
+            left,
+            right,
         );
     }
 
@@ -184,11 +189,8 @@ function evalInfixExpression(
         );
     }
 
-    if (
-        left?.type() === ObjectType.STRING_OBJ &&
-        right?.type() === ObjectType.STRING_OBJ
-    ) {
-        return;
+    if (left instanceof StringObj && right instanceof StringObj) {
+        return evalStringInfixExpression(operator!, left, right);
     }
 
     return newError(
@@ -234,6 +236,22 @@ function evalIntegerInfixExpression(
                 `unknown operator ${left.type()} ${operator}, ${right.type()}`,
             );
     }
+}
+
+function evalStringInfixExpression(
+    operator: string,
+    left: StringObj,
+    right: StringObj,
+): MObject {
+    if (operator !== "+") {
+        return newError(
+            `unknown operator: ${left.type()} ${operator} ${right.type}`,
+        );
+    }
+
+    const leftVal = left.value;
+    const rightVal = right.value;
+    return new StringObj(leftVal + rightVal);
 }
 
 function evalIfExpression(
