@@ -147,7 +147,7 @@ export function evaluator(
                 return index;
             }
 
-            return evalIndexExpression(left, index);
+            return evalIndexExpression(left!, index!);
     }
 
     return undefined;
