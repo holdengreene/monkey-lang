@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { BlockStatement, Identifier } from "../ast/ast.js";
 import { Environment } from "./environment.js";
 
@@ -19,12 +20,16 @@ export interface MObject {
     inspect(): string;
 }
 
+export interface Hashable {
+    hashKey(): HashKey;
+}
+
 type HashKey = {
     oType: ObjectType;
-    value: number;
+    value: number | string;
 };
 
-export class IntegerObj implements MObject {
+export class IntegerObj implements MObject, Hashable {
     constructor(public value: number) {}
 
     public inspect(): string {
@@ -40,19 +45,7 @@ export class IntegerObj implements MObject {
     }
 }
 
-export class ErrorObj implements MObject {
-    constructor(public message: string) {}
-
-    public type(): ObjectType {
-        return ObjectType.ERROR_OBJ;
-    }
-
-    public inspect(): string {
-        return `Error: ${this.message}`;
-    }
-}
-
-export class BooleanObj implements MObject {
+export class BooleanObj implements MObject, Hashable {
     constructor(public value: boolean) {}
 
     public type(): ObjectType {
@@ -76,7 +69,7 @@ export class BooleanObj implements MObject {
     }
 }
 
-export class StringObj implements MObject {
+export class StringObj implements MObject, Hashable {
     constructor(public value: string) {}
 
     public type(): ObjectType {
@@ -85,6 +78,12 @@ export class StringObj implements MObject {
 
     public inspect(): string {
         return this.value;
+    }
+
+    public hashKey(): HashKey {
+        const hash = createHash("sha256").update(this.value).digest("hex");
+
+        return {oType: this.type(), value: hash}
     }
 }
 
@@ -148,6 +147,18 @@ export class FunctionObj implements MObject {
     }
 }
 
+export class ErrorObj implements MObject {
+    constructor(public message: string) {}
+
+    public type(): ObjectType {
+        return ObjectType.ERROR_OBJ;
+    }
+
+    public inspect(): string {
+        return `Error: ${this.message}`;
+    }
+}
+
 export class ArrayObj implements MObject {
     constructor(public elements: MObject[]) {}
 
@@ -166,6 +177,32 @@ export class ArrayObj implements MObject {
         out.push("[");
         out.push(elements.join(", "));
         out.push("]");
+        return out.join("");
+    }
+}
+
+type HashPair = {
+    key: MObject;
+    value: MObject;
+};
+export class HashObj implements MObject {
+    constructor(public pairs: Map<HashKey, HashPair>) {}
+
+    public type(): ObjectType {
+        return ObjectType.HASH_OBJ;
+    }
+
+    public inspect(): string {
+        const out: string[] = [];
+        const pairs: string[] = [];
+
+        this.pairs.forEach((pair) =>
+            pairs.push(`${pair.key.inspect()}: ${pair.value.inspect()}`),
+        );
+
+        out.push("{");
+        out.push(pairs.join(", "));
+        out.push("}");
         return out.join("");
     }
 }
