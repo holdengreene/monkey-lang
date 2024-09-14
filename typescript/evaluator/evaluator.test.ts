@@ -10,8 +10,11 @@ import {
 import { Parser } from "../parser/parser.js";
 import { evaluator, NULL } from "./evaluator.js";
 
+type TestsNumber = { input: string; expected: number }[];
+type TestsBoolean = { input: string; expected: boolean }[];
+
 it("should evaluate integer expressions", () => {
-    const tests: { input: string; expected: number }[] = [
+    const tests: TestsNumber = [
         { input: "5", expected: 5 },
         { input: "10", expected: 10 },
         { input: "-5", expected: -5 },
@@ -36,7 +39,7 @@ it("should evaluate integer expressions", () => {
 });
 
 it("should evaluate boolean expressions", () => {
-    const tests: { input: string; expected: boolean }[] = [
+    const tests: TestsBoolean = [
         { input: "true", expected: true },
         { input: "false", expected: false },
         { input: "1 < 2", expected: true },
@@ -65,7 +68,7 @@ it("should evaluate boolean expressions", () => {
 });
 
 it("should evaluate the bang operator", () => {
-    const tests: { input: string; expected: boolean }[] = [
+    const tests: TestsBoolean = [
         { input: "!true", expected: false },
         { input: "!false", expected: true },
         { input: "!5", expected: false },
@@ -103,7 +106,7 @@ it("should evaluate if else expressions", () => {
 });
 
 it("should evaluate return statements", () => {
-    const tests: { input: string; expected: number }[] = [
+    const tests: TestsNumber = [
         { input: "return 10;", expected: 10 },
         { input: "return 10; 9;", expected: 10 },
         { input: "return 2 * 5; 9;", expected: 10 },
@@ -148,7 +151,7 @@ it("should evaluate return statements", () => {
 });
 
 it("should evaluate let statements", () => {
-    const tests: { input: string; expected: number }[] = [
+    const tests: TestsNumber = [
         { input: "let a = 5; a;", expected: 5 },
         { input: "let a = 5 * 5; a;", expected: 25 },
         { input: "let a = 5; let b = a; b;", expected: 5 },
@@ -172,6 +175,56 @@ it("should evalaute function objects", () => {
 
     const expectedBody = "(x + 2)";
     expect(func.body?.string()).toBe(expectedBody);
+});
+
+it("should evaluate function application", () => {
+    const tests: TestsNumber = [
+        { input: "let identity = fn(x) { x; }; identity(5);", expected: 5 },
+        {
+            input: "let identity = fn(x) { return x; }; identity(5);",
+            expected: 5,
+        },
+        { input: "let double = fn(x) { x * 2; }; double(5);", expected: 10 },
+        { input: "let add = fn(x, y) { x + y; }; add(5, 5);", expected: 10 },
+        {
+            input: "let add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5));",
+            expected: 20,
+        },
+        { input: "fn(x) { x; }(5)", expected: 5 },
+    ];
+
+    for (const test of tests) {
+        const evaluated = testEval(test.input);
+        testIntegerObject(evaluated, test.expected);
+    }
+});
+
+it("should create an enclosing environment", () => {
+    const input = `let first = 10;
+		let second = 10;
+		let third = 10;
+
+		let ourFunction = fn(first) {
+  			let second = 20;
+
+  			first + second + third;
+		};
+
+		ourFunction(20) + first + second;`;
+
+    testIntegerObject(testEval(input), 70);
+});
+
+it("should properly closure it up", () => {
+    const input = `
+		let newAdder = fn(x) {
+  			fn(y) { x + y };
+		};
+
+		let addTwo = newAdder(2);
+		addTwo(2);`;
+
+    testIntegerObject(testEval(input), 4);
 });
 
 function testEval(input: string) {
