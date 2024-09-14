@@ -147,7 +147,19 @@ it("should evaluate return statements", () => {
     }
 });
 
-it("should evaluate let statements", () => {});
+it("should evaluate let statements", () => {
+    const tests: { input: string; expected: number }[] = [
+        { input: "let a = 5; a;", expected: 5 },
+        { input: "let a = 5 * 5; a;", expected: 25 },
+        { input: "let a = 5; let b = a; b;", expected: 5 },
+        { input: "let a = 5; let b = a; let c = a + b + 5; c;", expected: 15 },
+    ];
+
+    for (const test of tests) {
+        const evaluated = testEval(test.input);
+        testIntegerObject(evaluated, test.expected);
+    }
+});
 
 it("should evalaute function objects", () => {
     const input = "fn(x) { x + 2; };";

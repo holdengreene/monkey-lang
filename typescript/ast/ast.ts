@@ -80,10 +80,12 @@ type LetStatementNode = {
 };
 export class LetStatement extends Statement {
     public name?: Identifier;
+    public value?: Expression;
 
     constructor(statementNode: LetStatementNode) {
-        super({ token: statementNode.token, value: statementNode.value });
+        super({ token: statementNode.token });
         this.name = statementNode.name;
+        this.value = statementNode.value;
     }
 
     public string(): string {

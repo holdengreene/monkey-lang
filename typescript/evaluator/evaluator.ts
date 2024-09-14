@@ -5,9 +5,11 @@ import {
     Expression,
     ExpressionStatement,
     FunctionLiteral,
+    Identifier,
     IfExpression,
     InfixExpression,
     IntegerLiteral,
+    LetStatement,
     PrefixExpression,
     Program,
     ReturnStatement,
@@ -41,14 +43,35 @@ export function evaluator(
         // Statements
         case node instanceof Program:
             return evalProgram(node.statements, env);
+
         case node instanceof ExpressionStatement:
             return evaluator(node.expression!, env);
+
+        case node instanceof LetStatement:
+            const value = evaluator(node.value!, env);
+            if (isError(value)) {
+                return value;
+            }
+            env.set(node.name?.value!, value!);
+            break;
+
+        case node instanceof BlockStatement:
+            return evalBlockStatement(node, env);
+
+        case node instanceof ReturnStatement:
+            const val = evaluator(node.returnValue!, env);
+            if (isError(val)) {
+                return val;
+            }
+            return new ReturnValueObj(val!);
 
         // Expressions
         case node instanceof IntegerLiteral:
             return new IntegerObj(+node.value!);
+
         case node instanceof BooleanLiteral:
             return nativeBooleanToBooleanObject(node.value!);
+
         case node instanceof PrefixExpression: {
             const right = evaluator(node.right!, env);
             if (isError(right)) {
@@ -57,6 +80,7 @@ export function evaluator(
 
             return evalPrefixExpression(node.operator, right);
         }
+
         case node instanceof InfixExpression: {
             const left = evaluator(node.left!, env);
             if (isError(left)) {
@@ -70,20 +94,18 @@ export function evaluator(
 
             return evalInfixExpression(node.operator, left, right);
         }
-        case node instanceof BlockStatement:
-            return evalBlockStatement(node, env);
+
         case node instanceof IfExpression:
             return evalIfExpression(node, env);
-        case node instanceof ReturnStatement:
-            const val = evaluator(node.returnValue!, env);
-            if (isError(val)) {
-                return val;
-            }
-            return new ReturnValueObj(val!);
+
+        case node instanceof Identifier:
+            return evalIdentifier(node, env);
+
         case node instanceof FunctionLiteral:
             const params = node.parameters;
             const body = node.body;
             return new FunctionObj({ params, env, body });
+
         case node instanceof CallExpression:
             const func = evaluator(node.function!, env);
             if (isError(func)) {
@@ -231,6 +253,15 @@ function evalIfExpression(
     } else {
         return NULL;
     }
+}
+
+function evalIdentifier(node: Identifier, env: Environment): MObject {
+    const value = env.get(node.value);
+    if (value) {
+        return value;
+    }
+
+    return newError(`identifier not found: ${node.value}`);
 }
 
 function evalBlockStatement(

@@ -20,7 +20,11 @@ export class Environment {
         this.outer = outer;
     }
 
-    public get(name: string): MObject | undefined {
+    public get(name?: string): MObject | undefined {
+        if (!name) {
+            return undefined;
+        }
+
         let obj = this.store.get(name);
 
         if (!obj && this.outer) {
