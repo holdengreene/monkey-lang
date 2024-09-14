@@ -157,11 +157,14 @@ export class ExpressionStatement extends Statement {
 
 type IdentifierExpressionNode = {
     token?: Token;
-    value?: Value;
+    value?: string;
 };
 export class Identifier extends Expression {
+    public value?: string;
+
     constructor(expressionNode: IdentifierExpressionNode) {
-        super(expressionNode);
+        super({ token: expressionNode.token });
+        this.value = expressionNode.value;
     }
 }
 

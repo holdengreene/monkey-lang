@@ -1,22 +1,31 @@
 import {
     BlockStatement,
     BooleanLiteral,
+    CallExpression,
+    Expression,
     ExpressionStatement,
+    FunctionLiteral,
     IfExpression,
     InfixExpression,
     IntegerLiteral,
     PrefixExpression,
     Program,
+    ReturnStatement,
     Statement,
     type ASTNode,
 } from "../ast/ast.js";
-import type { Environment } from "../object/environment.js";
+import {
+    newEnclosedEnvironment,
+    type Environment,
+} from "../object/environment.js";
 import {
     BooleanObj,
     ErrorObj,
+    FunctionObj,
     IntegerObj,
     NullObj,
     ObjectType,
+    ReturnValueObj,
     type MObject,
 } from "../object/object.js";
 
@@ -65,6 +74,28 @@ export function evaluator(
             return evalBlockStatement(node, env);
         case node instanceof IfExpression:
             return evalIfExpression(node, env);
+        case node instanceof ReturnStatement:
+            const val = evaluator(node.returnValue!, env);
+            if (isError(val)) {
+                return val;
+            }
+            return new ReturnValueObj(val!);
+        case node instanceof FunctionLiteral:
+            const params = node.parameters;
+            const body = node.body;
+            return new FunctionObj({ params, env, body });
+        case node instanceof CallExpression:
+            const func = evaluator(node.function!, env);
+            if (isError(func)) {
+                return func;
+            }
+
+            const args = evalExpressions(node.arguments!, env);
+            if (args.length === 1 && isError(args[0])) {
+                return args[0];
+            }
+
+            return applyFunction(func!, args);
     }
 
     return undefined;
@@ -79,14 +110,11 @@ function evalProgram(
     for (const statement of stmts) {
         result = evaluator(statement, env);
 
-        if (result) {
-            const rt = result.type();
-            if (
-                rt === ObjectType.RETURN_VALUE_OBJ ||
-                rt === ObjectType.ERROR_OBJ
-            ) {
+        switch (true) {
+            case result instanceof ReturnValueObj:
+                return result.value;
+            case result instanceof ErrorObj:
                 return result;
-            }
         }
     }
 
@@ -109,30 +137,41 @@ function evalInfixExpression(
     left?: MObject,
     right?: MObject,
 ): MObject {
-    switch (true) {
-        case left?.type() === ObjectType.INTEGER_OBJ:
-        case right?.type() === ObjectType.INTEGER_OBJ:
-            return evalIntegerInfixExpression(
-                operator,
-                left as IntegerObj,
-                right as IntegerObj,
-            );
-        case operator === "==":
-            return nativeBooleanToBooleanObject(left == right);
-        case operator === "!=":
-            return nativeBooleanToBooleanObject(left != right);
-        case left?.type() !== right?.type():
-            return newError(
-                `type mismatch: ${left?.type()} ${operator} ${right?.type()}`,
-            );
-        case left?.type() === ObjectType.STRING_OBJ:
-        case right?.type() === ObjectType.STRING_OBJ:
-            break;
-        default:
-            return newError(
-                `unknown operator ${left?.type()} ${operator} ${right?.type()}`,
-            );
+    if (
+        left?.type() === ObjectType.INTEGER_OBJ &&
+        left?.type() === ObjectType.INTEGER_OBJ
+    ) {
+        return evalIntegerInfixExpression(
+            operator,
+            left as IntegerObj,
+            right as IntegerObj,
+        );
     }
+
+    if (operator === "==") {
+        return nativeBooleanToBooleanObject(left == right);
+    }
+
+    if (operator === "!=") {
+        return nativeBooleanToBooleanObject(left != right);
+    }
+
+    if (left?.type() !== right?.type()) {
+        return newError(
+            `type mismatch: ${left?.type()} ${operator} ${right?.type()}`,
+        );
+    }
+
+    if (
+        left?.type() === ObjectType.STRING_OBJ &&
+        right?.type() === ObjectType.STRING_OBJ
+    ) {
+        return;
+    }
+
+    return newError(
+        `unknown operator ${left?.type()} ${operator} ${right?.type()}`,
+    );
 }
 
 function evalIntegerInfixExpression(
@@ -240,6 +279,49 @@ function evalMinusPrefixOperatorExpression(right?: MObject): MObject {
 
     const value = right.value;
     return new IntegerObj(-value);
+}
+
+function evalExpressions(exps: Expression[], env: Environment): MObject[] {
+    const result: MObject[] = [];
+
+    for (const exp of exps) {
+        const evaluated = evaluator(exp, env);
+        if (isError(evaluated)) {
+            return [evaluated!];
+        }
+
+        result.push(evaluated!);
+    }
+
+    return result;
+}
+
+function applyFunction(func: MObject, args: MObject[]): MObject {
+    if (func instanceof FunctionObj) {
+        const extendedEnv = extendedFunctionEnv(func, args);
+        const evaluated = evaluator(func.body!, extendedEnv);
+        return unwrapReturnValue(evaluated!);
+    }
+
+    return newError(`not a function ${func.type()}`);
+}
+
+function extendedFunctionEnv(func: FunctionObj, args: MObject[]): Environment {
+    const env = newEnclosedEnvironment(func.env);
+
+    for (const [index, param] of func.params?.entries() ?? []) {
+        env.set(param.value!, args[index]);
+    }
+
+    return env;
+}
+
+function unwrapReturnValue(obj: MObject): MObject {
+    if (obj instanceof ReturnValueObj) {
+        return obj.value;
+    }
+
+    return obj;
 }
 
 function isTruthy(obj?: MObject): boolean {

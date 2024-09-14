@@ -1,3 +1,6 @@
+import { BlockStatement, Identifier } from "../ast/ast.js";
+import { Environment } from "./environment.js";
+
 export enum ObjectType {
     INTEGER_OBJ = "INTEGER",
     BOOLEAN_OBJ = "BOOLEAN",
@@ -80,5 +83,55 @@ export class NullObj implements MObject {
 
     public inspect(): string {
         return "null";
+    }
+}
+
+export class ReturnValueObj implements MObject {
+    constructor(public value: MObject) {}
+
+    public type(): ObjectType {
+        return ObjectType.RETURN_VALUE_OBJ;
+    }
+
+    public inspect(): string {
+        return this.value.inspect();
+    }
+}
+
+type FunctionObjParams = {
+    params?: Identifier[];
+    body?: BlockStatement;
+    env: Environment;
+};
+export class FunctionObj implements MObject {
+    public params?: Identifier[];
+    public body?: BlockStatement;
+    public env: Environment;
+
+    constructor(functionObjParams: FunctionObjParams) {
+        this.params = functionObjParams.params;
+        this.body = functionObjParams.body;
+        this.env = functionObjParams.env;
+    }
+
+    public type(): ObjectType {
+        return ObjectType.FUNCTION_OBJ;
+    }
+
+    public inspect(): string {
+        const out: string[] = [];
+        const params: string[] = [];
+
+        for (const param of this.params ?? []) {
+            params.push(param.string());
+        }
+
+        out.push("fn");
+        out.push("(");
+        out.push(params.join(", "));
+        out.push(") {\n");
+        out.push(this.body?.string() ?? "");
+        out.push("\n");
+        return out.join("");
     }
 }

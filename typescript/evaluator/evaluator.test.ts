@@ -1,7 +1,12 @@
 import { expect, it } from "vitest";
 import { Lexer } from "../lexer/Lexer.js";
-import { Environment } from "../object/environment.js";
-import { BooleanObj, IntegerObj, type MObject } from "../object/object.js";
+import { newEnvironment } from "../object/environment.js";
+import {
+    BooleanObj,
+    FunctionObj,
+    IntegerObj,
+    type MObject,
+} from "../object/object.js";
 import { Parser } from "../parser/parser.js";
 import { evaluator, NULL } from "./evaluator.js";
 
@@ -59,7 +64,7 @@ it("should evaluate boolean expressions", () => {
     }
 });
 
-it("should test the bang operator", () => {
+it("should evaluate the bang operator", () => {
     const tests: { input: string; expected: boolean }[] = [
         { input: "!true", expected: false },
         { input: "!false", expected: true },
@@ -75,7 +80,7 @@ it("should test the bang operator", () => {
     }
 });
 
-it("should test if else expressions", () => {
+it("should evaluate if else expressions", () => {
     const tests: { input: string; expected: number | null }[] = [
         { input: "if (true) { 10 }", expected: 10 },
         { input: "if (false) { 10 }", expected: null },
@@ -97,11 +102,71 @@ it("should test if else expressions", () => {
     }
 });
 
+it("should evaluate return statements", () => {
+    const tests: { input: string; expected: number }[] = [
+        { input: "return 10;", expected: 10 },
+        { input: "return 10; 9;", expected: 10 },
+        { input: "return 2 * 5; 9;", expected: 10 },
+        { input: "9; return 2 * 5; 9;", expected: 10 },
+        { input: "if (10 > 1) { return 10; }", expected: 10 },
+        {
+            input: `
+			if (10 > 1) {
+			if (10 > 1) {
+				return 10;
+			}
+
+			return 1;
+			}`,
+            expected: 10,
+        },
+        // {
+        //     input: `
+        // 	let f = fn(x) {
+        // 	return x;
+        // 	x + 10;
+        // 	};
+        // 	f(10);`,
+        //     expected: 10,
+        // },
+        // {
+        //     input: `
+        // 	let f = fn(x) {
+        // 	let result = x + 10;
+        // 	return result;
+        // 	return 10;
+        // 	};
+        // 	f(10);`,
+        //     expected: 20,
+        // },
+    ];
+
+    for (const test of tests) {
+        const evaluated = testEval(test.input);
+        testIntegerObject(evaluated, test.expected);
+    }
+});
+
+it("should evaluate let statements", () => {});
+
+it("should evalaute function objects", () => {
+    const input = "fn(x) { x + 2; };";
+
+    const evaluated = testEval(input);
+    const func = evaluated as FunctionObj;
+    expect(func).toBeInstanceOf(FunctionObj);
+    expect(func.params).toHaveLength(1);
+    expect(func.params?.[0].string()).toBe("x");
+
+    const expectedBody = "(x + 2)";
+    expect(func.body?.string()).toBe(expectedBody);
+});
+
 function testEval(input: string) {
     const lexer = new Lexer(input);
     const parser = new Parser(lexer);
     const program = parser.parseProgram();
-    const env = new Environment();
+    const env = newEnvironment();
 
     return evaluator(program, env);
 }
