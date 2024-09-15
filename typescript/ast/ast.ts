@@ -373,7 +373,7 @@ export class HashLiteral extends Expression {
         const out: string[] = [];
         const pairs: string[] = [];
 
-        for (const [key, value] of this.pairs?.entries() ?? []) {
+        for (const [key, value] of this.pairs ?? []) {
             pairs.push(key.string() + ":" + value.string());
         }
 

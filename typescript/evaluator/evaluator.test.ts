@@ -5,15 +5,23 @@ import {
     ArrayObj,
     BooleanObj,
     FunctionObj,
+    HashKey,
+    HashObj,
     IntegerObj,
+    NullObj,
     StringObj,
     type MObject,
 } from "../object/object.js";
 import { Parser } from "../parser/parser.js";
-import { evaluator, NULL } from "./evaluator.js";
+import { evaluator } from "./evaluator.js";
+
+const NULL = new NullObj();
+const TRUE = new BooleanObj(true);
+const FALSE = new BooleanObj(false);
 
 type TestsNumber = { input: string; expected: number }[];
 type TestsBoolean = { input: string; expected: boolean }[];
+type TestsNumberNull = { input: string; expected: number | null }[];
 
 it("should evaluate integer expressions", () => {
     const tests: TestsNumber = [
@@ -86,7 +94,7 @@ it("should evaluate the bang operator", () => {
 });
 
 it("should evaluate if else expressions", () => {
-    const tests: { input: string; expected: number | null }[] = [
+    const tests: TestsNumberNull = [
         { input: "if (true) { 10 }", expected: 10 },
         { input: "if (false) { 10 }", expected: null },
         { input: "if (1) { 10 }", expected: 10 },
@@ -262,7 +270,7 @@ it("should evaluate array literals", () => {
 });
 
 it("should allow for array index expressions", () => {
-    const tests: { input: string; expected: number | null }[] = [
+    const tests: TestsNumberNull = [
         {
             input: "[1, 2, 3][0]",
             expected: 1,
@@ -308,6 +316,79 @@ it("should allow for array index expressions", () => {
     for (const test of tests) {
         const evaluated = testEval(test.input);
 
+        if (typeof test.expected === "number") {
+            testIntegerObject(evaluated, test.expected);
+        } else {
+            testNullObject(evaluated);
+        }
+    }
+});
+
+it("should evaluate hash literals", () => {
+    const input = `let two = "two";
+	{
+		"one": 10 - 9,
+		two: 1 + 1,
+		"thr" + "ee": 6 / 2,
+		4: 4,
+		true: 5,
+		false: 6
+	}`;
+
+    const hash = testEval(input) as HashObj;
+    expect(hash).toBeInstanceOf(HashObj);
+
+    const expected = new Map<string | number, number>();
+    expected.set(new StringObj("one").hashKey(), 1);
+    expected.set(new StringObj("two").hashKey(), 2);
+    expected.set(new StringObj("three").hashKey(), 3);
+    expected.set(new IntegerObj(4).hashKey(), 4);
+    expected.set(TRUE.hashKey(), 5);
+    expected.set(FALSE.hashKey(), 6);
+
+    expect(hash.pairs).toHaveLength(expected.size);
+
+    for (const [expectedKey, expectedValue] of expected) {
+        const pair = hash.pairs.get(expectedKey);
+        expect(pair).toBeDefined();
+        testIntegerObject(pair?.value, expectedValue);
+    }
+});
+
+it.only("should allow for hash index expressions", () => {
+    const tests: TestsNumberNull = [
+        {
+            input: `{"foo": 5}["foo"]`,
+            expected: 5,
+        },
+        {
+            input: `{"foo": 5}["bar"]`,
+            expected: null,
+        },
+        {
+            input: `let key = "foo"; {"foo": 5}[key]`,
+            expected: 5,
+        },
+        {
+            input: `{}["foo"]`,
+            expected: null,
+        },
+        {
+            input: `{5: 5}[5]`,
+            expected: 5,
+        },
+        {
+            input: `{true: 5}[true]`,
+            expected: 5,
+        },
+        {
+            input: `{false: 5}[false]`,
+            expected: 5,
+        },
+    ];
+
+    for (const test of tests) {
+        const evaluated = testEval(test.input);
         if (typeof test.expected === "number") {
             testIntegerObject(evaluated, test.expected);
         } else {

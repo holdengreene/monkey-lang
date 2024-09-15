@@ -6,6 +6,7 @@ import {
     Expression,
     ExpressionStatement,
     FunctionLiteral,
+    HashLiteral,
     Identifier,
     IfExpression,
     IndexExpression,
@@ -28,15 +29,19 @@ import {
     BooleanObj,
     ErrorObj,
     FunctionObj,
+    type HashKey,
+    type HashPair,
     IntegerObj,
     NullObj,
     ObjectType,
     ReturnValueObj,
     StringObj,
     type MObject,
+    Hashable,
+    HashObj,
 } from "../object/object.js";
 
-export const NULL = new NullObj();
+const NULL = new NullObj();
 const TRUE = new BooleanObj(true);
 const FALSE = new BooleanObj(false);
 
@@ -148,6 +153,9 @@ export function evaluator(
             }
 
             return evalIndexExpression(left!, index!);
+
+        case node instanceof HashLiteral:
+            return evalHashLiteral(node, env);
     }
 
     return undefined;
@@ -277,6 +285,10 @@ function evalIndexExpression(left: MObject, index: MObject): MObject {
         return evalArrayIndexExpression(left, index);
     }
 
+    if (left instanceof HashObj) {
+        return evalHashIndexExpression(left, index);
+    }
+
     return newError(`Index operator not supported: ${left.type()}`);
 }
 
@@ -292,6 +304,48 @@ function evalArrayIndexExpression(
     }
 
     return arrayObj.elements[idx];
+}
+
+function evalHashLiteral(
+    node: HashLiteral,
+    env: Environment,
+): MObject | undefined {
+    const pairs = new Map<HashKey, HashPair>();
+
+    for (const [keyNode, valueNode] of node.pairs ?? []) {
+        const key = evaluator(keyNode, env);
+        if (isError(key)) {
+            return key;
+        }
+
+        if (!(key instanceof Hashable)) {
+            return newError(`unusable as hash key: ${key?.type()}`);
+        }
+
+        const value = evaluator(valueNode, env);
+        if (isError(value)) {
+            return value;
+        }
+
+        const hashed = key.hashKey();
+        pairs.set(hashed, { key, value: value! });
+    }
+
+    return new HashObj(pairs);
+}
+
+function evalHashIndexExpression(hash: HashObj, index: MObject): MObject {
+    if (!(index instanceof Hashable)) {
+        return newError(`unusuable as hash key: ${index.type()}`);
+    }
+
+    const pair = hash.pairs.get(index.hashKey());
+
+    if (!pair) {
+        return NULL;
+    }
+
+    return pair.value;
 }
 
 function evalIfExpression(

@@ -20,17 +20,18 @@ export interface MObject {
     inspect(): string;
 }
 
-export interface Hashable {
-    hashKey(): HashKey;
+export type HashKey = number | string;
+
+export abstract class Hashable {
+    public hashKey(): HashKey {
+        return "";
+    }
 }
 
-type HashKey = {
-    oType: ObjectType;
-    value: number | string;
-};
-
-export class IntegerObj implements MObject, Hashable {
-    constructor(public value: number) {}
+export class IntegerObj extends Hashable implements MObject {
+    constructor(public value: number) {
+        super();
+    }
 
     public inspect(): string {
         return this.value.toString();
@@ -41,12 +42,14 @@ export class IntegerObj implements MObject, Hashable {
     }
 
     public hashKey(): HashKey {
-        return { oType: this.type(), value: this.value };
+        return this.value;
     }
 }
 
-export class BooleanObj implements MObject, Hashable {
-    constructor(public value: boolean) {}
+export class BooleanObj extends Hashable implements MObject {
+    constructor(public value: boolean) {
+        super();
+    }
 
     public type(): ObjectType {
         return ObjectType.BOOLEAN_OBJ;
@@ -65,12 +68,14 @@ export class BooleanObj implements MObject, Hashable {
             value = 0;
         }
 
-        return { oType: this.type(), value };
+        return value;
     }
 }
 
-export class StringObj implements MObject, Hashable {
-    constructor(public value: string) {}
+export class StringObj extends Hashable implements MObject {
+    constructor(public value: string) {
+        super();
+    }
 
     public type(): ObjectType {
         return ObjectType.STRING_OBJ;
@@ -83,7 +88,7 @@ export class StringObj implements MObject, Hashable {
     public hashKey(): HashKey {
         const hash = createHash("sha256").update(this.value).digest("hex");
 
-        return {oType: this.type(), value: hash}
+        return hash;
     }
 }
 
@@ -181,7 +186,7 @@ export class ArrayObj implements MObject {
     }
 }
 
-type HashPair = {
+export type HashPair = {
     key: MObject;
     value: MObject;
 };
