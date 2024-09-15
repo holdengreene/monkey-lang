@@ -285,7 +285,7 @@ it("should parse if expressions", () => {
     if (!consequence.expression) {
         throw new Error("consequence.expression is missing");
     }
-    testIdentifier(consequence.expression, "x");
+    testIdentifier(consequence.expression as Identifier, "x");
 
     expect(exp.alternative).toBeUndefined();
 });
@@ -315,7 +315,7 @@ it("should parse if else expressions", () => {
     if (!consequence.expression) {
         throw new Error("consequence.expression is missing");
     }
-    testIdentifier(consequence.expression, "x");
+    testIdentifier(consequence.expression as Identifier, "x");
 
     expect(exp.alternative?.statements).toHaveLength(1);
 
@@ -325,7 +325,7 @@ it("should parse if else expressions", () => {
     if (!alternative.expression) {
         throw new Error("alternative.expression is missing");
     }
-    testIdentifier(alternative.expression, "y");
+    testIdentifier(alternative.expression as Identifier, "y");
 });
 
 it("should parse functional literals", () => {
@@ -393,7 +393,7 @@ it("should parse call expressions", () => {
         throw new Error("exp.function is missing");
     }
 
-    testIdentifier(exp.function, "add");
+    testIdentifier(exp.function as Identifier, "add");
 
     expect(exp.arguments).toHaveLength(3);
 
@@ -441,7 +441,7 @@ it("should parse call expression parameters", () => {
             throw new Error("exp.function is missing");
         }
 
-        testIdentifier(exp.function, test.expectedIdent);
+        testIdentifier(exp.function as Identifier, test.expectedIdent);
         expect(exp.arguments).toHaveLength(test.expectedArgs.length);
 
         if (!exp.arguments) {
@@ -505,7 +505,7 @@ it("should parse index expressions", () => {
         throw new Error("indexExp.left is missing");
     }
 
-    testIdentifier(indexExp.left, "myArray");
+    testIdentifier(indexExp.left as Identifier, "myArray");
 
     if (!indexExp.index) {
         throw new Error("indexExp.index is missing");
@@ -641,11 +641,11 @@ function testLetStatement(statement: LetStatement, name: string) {
 function testLiteralExpression(exp: Expression, expected: any) {
     switch (typeof expected) {
         case "string":
-            return testIdentifier(exp, expected);
+            return testIdentifier(exp as Identifier, expected);
         case "number":
             return testIntegerLiteral(exp, expected);
         case "boolean":
-            return testBooleanLiteral(exp, expected);
+            return testBooleanLiteral(exp as BooleanLiteral, expected);
     }
 
     throw new Error(`type of exp not handled. got=${typeof exp}`);
