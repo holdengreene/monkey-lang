@@ -211,3 +211,16 @@ export class HashObj implements MObject {
         return out.join("");
     }
 }
+
+type BuiltinFunction = (...args: MObject[]) => MObject;
+export class BuiltinObj implements MObject {
+    constructor(public fn: BuiltinFunction) {}
+
+    public type(): ObjectType {
+        return ObjectType.BUILTIN_OBJ;
+    }
+
+    public inspect(): string {
+        return "builtin function";
+    }
+}

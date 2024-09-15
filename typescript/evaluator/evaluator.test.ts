@@ -6,19 +6,13 @@ import {
     BooleanObj,
     ErrorObj,
     FunctionObj,
-    HashKey,
     HashObj,
     IntegerObj,
-    NullObj,
     StringObj,
     type MObject,
 } from "../object/object.js";
 import { Parser } from "../parser/parser.js";
-import { evaluator } from "./evaluator.js";
-
-const NULL = new NullObj();
-const TRUE = new BooleanObj(true);
-const FALSE = new BooleanObj(false);
+import { evaluator, FALSE, NULL, TRUE } from "./evaluator.js";
 
 type TestsNumber = { input: string; expected: number }[];
 type TestsBoolean = { input: string; expected: boolean }[];
@@ -320,7 +314,76 @@ it("should concatenate strings", () => {
     expect(str.value).toBe("Hello World!");
 });
 
-it("should call builtin functions", () => {});
+it("should call builtin functions", () => {
+    const tests: {
+        input: string;
+        expected: number | string | number[] | null;
+    }[] = [
+        { input: `len("")`, expected: 0 },
+        { input: `len("four")`, expected: 4 },
+        { input: `len("hello world")`, expected: 11 },
+        {
+            input: `len(1)`,
+            expected: "argument to 'len' not supported, got INTEGER",
+        },
+        {
+            input: `len("one", "two")`,
+            expected: "wrong number of arguments. got=2, want=1",
+        },
+        { input: `len([1, 2, 3])`, expected: 3 },
+        { input: `len([])`, expected: 0 },
+        { input: `puts("hello", "world!")`, expected: null },
+        { input: `first([1, 2, 3])`, expected: 1 },
+        { input: `first([])`, expected: null },
+        {
+            input: `first(1)`,
+            expected: "argument to 'first' must be ARRAY, got INTEGER",
+        },
+        { input: `last([1, 2, 3])`, expected: 3 },
+        { input: `last([])`, expected: null },
+        {
+            input: `last(1)`,
+            expected: "argument to 'last' must be ARRAY, got INTEGER",
+        },
+        { input: `rest([1, 2, 3])`, expected: [2, 3] },
+        { input: `rest([])`, expected: null },
+        { input: `push([], 1)`, expected: [1] },
+        {
+            input: `push(1, 1)`,
+            expected: "argument to 'push' must be ARRAY, got INTEGER",
+        },
+    ];
+
+    for (const test of tests) {
+        const evaluated = testEval(test.input);
+        console.log(evaluated);
+
+        if (typeof test.expected === "number") {
+            testIntegerObject(evaluated, test.expected);
+            continue;
+        }
+
+        if (test.expected === null) {
+            testNullObject(evaluated);
+        }
+
+        if (typeof test.expected === "string") {
+            const errObj = evaluated as ErrorObj;
+            expect(errObj).toBeInstanceOf(ErrorObj);
+            expect(errObj.message).toBe(test.expected);
+        }
+
+        if (Array.isArray(test.expected)) {
+            const arrObj = evaluated as ArrayObj;
+            expect(arrObj).toBeInstanceOf(ArrayObj);
+            expect(arrObj.elements).toHaveLength(test.expected.length);
+
+            for (const [index, expectedElem] of test.expected.entries()) {
+                testIntegerObject(arrObj.elements[index], expectedElem);
+            }
+        }
+    }
+});
 
 it("should evaluate array literals", () => {
     const input = "[1, 2 * 2, 3 + 3]";

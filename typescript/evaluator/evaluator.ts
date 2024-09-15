@@ -27,6 +27,7 @@ import {
 import {
     ArrayObj,
     BooleanObj,
+    BuiltinObj,
     ErrorObj,
     FunctionObj,
     Hashable,
@@ -40,10 +41,11 @@ import {
     type HashPair,
     type MObject,
 } from "../object/object.js";
+import { builtins } from "./builtins.js";
 
-const NULL = new NullObj();
-const TRUE = new BooleanObj(true);
-const FALSE = new BooleanObj(false);
+export const NULL = new NullObj();
+export const TRUE = new BooleanObj(true);
+export const FALSE = new BooleanObj(false);
 
 export function evaluator(
     node: ASTNode,
@@ -373,6 +375,11 @@ function evalIdentifier(node: Identifier, env: Environment): MObject {
         return value;
     }
 
+    const builtin = builtins[node.value!];
+    if (builtin) {
+        return builtin;
+    }
+
     return newError(`identifier not found: ${node.value}`);
 }
 
@@ -446,6 +453,10 @@ function applyFunction(func: MObject, args: MObject[]): MObject {
         return unwrapReturnValue(evaluated!);
     }
 
+    if (func instanceof BuiltinObj) {
+        return func.fn(...args);
+    }
+
     return newError(`not a function ${func.type()}`);
 }
 
@@ -488,7 +499,7 @@ function nativeBooleanToBooleanObject(input: boolean): BooleanObj {
     }
 }
 
-function newError(msg: string) {
+export function newError(msg: string) {
     return new ErrorObj(msg);
 }
 
