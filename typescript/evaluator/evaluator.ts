@@ -3,7 +3,6 @@ import {
     BlockStatement,
     BooleanLiteral,
     CallExpression,
-    Expression,
     ExpressionStatement,
     FunctionLiteral,
     HashLiteral,
@@ -16,9 +15,10 @@ import {
     PrefixExpression,
     Program,
     ReturnStatement,
-    Statement,
     StringLiteral,
     type ASTNode,
+    type Expression,
+    type Statement,
 } from "../ast/ast.js";
 import {
     newEnclosedEnvironment,
@@ -29,16 +29,16 @@ import {
     BooleanObj,
     ErrorObj,
     FunctionObj,
-    type HashKey,
-    type HashPair,
+    Hashable,
+    HashObj,
     IntegerObj,
     NullObj,
     ObjectType,
     ReturnValueObj,
     StringObj,
+    type HashKey,
+    type HashPair,
     type MObject,
-    Hashable,
-    HashObj,
 } from "../object/object.js";
 
 const NULL = new NullObj();
