@@ -220,7 +220,7 @@ function evalInfixExpression(
     }
 
     return newError(
-        `unknown operator ${left?.type()} ${operator} ${right?.type()}`,
+        `unknown operator: ${left?.type()} ${operator} ${right?.type()}`,
     );
 }
 
@@ -259,7 +259,7 @@ function evalIntegerInfixExpression(
             return nativeBooleanToBooleanObject(leftVal != rightVal);
         default:
             return newError(
-                `unknown operator ${left.type()} ${operator}, ${right.type()}`,
+                `unknown operator: ${left.type()} ${operator}, ${right.type()}`,
             );
     }
 }
@@ -271,7 +271,7 @@ function evalStringInfixExpression(
 ): MObject {
     if (operator !== "+") {
         return newError(
-            `unknown operator: ${left.type()} ${operator} ${right.type}`,
+            `unknown operator: ${left.type()} ${operator} ${right.type()}`,
         );
     }
 
@@ -289,7 +289,7 @@ function evalIndexExpression(left: MObject, index: MObject): MObject {
         return evalHashIndexExpression(left, index);
     }
 
-    return newError(`Index operator not supported: ${left.type()}`);
+    return newError(`index operator not supported: ${left.type()}`);
 }
 
 function evalArrayIndexExpression(
@@ -336,7 +336,7 @@ function evalHashLiteral(
 
 function evalHashIndexExpression(hash: HashObj, index: MObject): MObject {
     if (!(index instanceof Hashable)) {
-        return newError(`unusuable as hash key: ${index.type()}`);
+        return newError(`unusable as hash key: ${index.type()}`);
     }
 
     const pair = hash.pairs.get(index.hashKey());
@@ -417,7 +417,7 @@ function evalMinusPrefixOperatorExpression(right?: MObject): MObject {
         right?.type() !== ObjectType.INTEGER_OBJ ||
         !(right instanceof IntegerObj)
     ) {
-        return newError(`unknown operator - ${right?.type()}`);
+        return newError(`unknown operator: -${right?.type()}`);
     }
 
     const value = right.value;

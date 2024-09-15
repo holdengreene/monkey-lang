@@ -4,6 +4,7 @@ import { newEnvironment } from "../object/environment.js";
 import {
     ArrayObj,
     BooleanObj,
+    ErrorObj,
     FunctionObj,
     HashKey,
     HashObj,
@@ -160,7 +161,71 @@ it("should evaluate return statements", () => {
     }
 });
 
-it("should handle errors", () => {});
+it("should handle errors", () => {
+    const tests: { input: string; expectedMessage: string }[] = [
+        {
+            input: "5 + true;",
+            expectedMessage: "type mismatch: INTEGER + BOOLEAN",
+        },
+        {
+            input: "5 + true; 5;",
+            expectedMessage: "type mismatch: INTEGER + BOOLEAN",
+        },
+        {
+            input: "-true",
+            expectedMessage: "unknown operator: -BOOLEAN",
+        },
+        {
+            input: "true + false;",
+            expectedMessage: "unknown operator: BOOLEAN + BOOLEAN",
+        },
+        {
+            input: "true + false + true + false;",
+            expectedMessage: "unknown operator: BOOLEAN + BOOLEAN",
+        },
+        {
+            input: "5; true + false; 5",
+            expectedMessage: "unknown operator: BOOLEAN + BOOLEAN",
+        },
+        {
+            input: `"Hello" - "World"`,
+            expectedMessage: "unknown operator: STRING - STRING",
+        },
+        {
+            input: "if (10 > 1) { true + false; }",
+            expectedMessage: "unknown operator: BOOLEAN + BOOLEAN",
+        },
+        {
+            input: `
+			if (10 > 1) {
+			if (10 > 1) {
+			return true + false;
+			}
+			return 1;
+			}
+			`,
+            expectedMessage: "unknown operator: BOOLEAN + BOOLEAN",
+        },
+        {
+            input: "foobar",
+            expectedMessage: "identifier not found: foobar",
+        },
+        {
+            input: `{"name": "Monkey"}[fn(x) { x }];`,
+            expectedMessage: "unusable as hash key: FUNCTION",
+        },
+        {
+            input: `999[1]`,
+            expectedMessage: "index operator not supported: INTEGER",
+        },
+    ];
+
+    for (const test of tests) {
+        const errObj = testEval(test.input) as ErrorObj;
+        expect(errObj).toBeInstanceOf(ErrorObj);
+        expect(errObj.message).toBe(test.expectedMessage);
+    }
+});
 
 it("should evaluate let statements", () => {
     const tests: TestsNumber = [
@@ -355,7 +420,7 @@ it("should evaluate hash literals", () => {
     }
 });
 
-it.only("should allow for hash index expressions", () => {
+it("should allow for hash index expressions", () => {
     const tests: TestsNumberNull = [
         {
             input: `{"foo": 5}["foo"]`,
