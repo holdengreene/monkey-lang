@@ -269,13 +269,13 @@ export class IfExpression extends Expression {
 
 type ForStatementNode = {
     token?: Token;
-    initialization?: Identifier;
+    initialization?: ExpressionStatement;
     condition?: Expression;
     afterthought?: Expression;
     body?: BlockStatement;
 };
 export class ForLiteral extends Expression {
-    public initialization?: Expression;
+    public initialization?: ExpressionStatement;
     public condition?: Expression;
     public afterthought?: Expression;
     public body?: BlockStatement;

@@ -470,11 +470,7 @@ export class Parser {
 
         this.nextToken();
 
-        forLit.initialization = this.parseExpression(Operators.LOWEST);
-
-        if (!this.expectPeek(TokenItem.SEMICOLON)) {
-            return undefined;
-        }
+        forLit.initialization = this.parseStatement();
 
         this.nextToken();
 

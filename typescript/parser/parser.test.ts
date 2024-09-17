@@ -341,10 +341,8 @@ it("should parse for statements", () => {
     const forLoop = stmt.expression as ForLiteral;
     expect(forLoop).toBeInstanceOf(ForLiteral);
 
-    if (!forLoop.initialization) {
-        throw new Error("forLoop.initialization is missing");
-    }
-    testIdentifier(forLoop.initialization, "i");
+    expect(forLoop.initialization).toBeInstanceOf(ExpressionStatement);
+    expect(forLoop.initialization?.tokenLiteral()).toBe("i");
 
     if (!forLoop.condition) {
         throw new Error("forLoop.condition is missing");
