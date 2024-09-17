@@ -39,6 +39,7 @@ export enum TokenItem {
     IF = "IF",
     ELSE = "ELSE",
     RETURN = "RETURN",
+    FOR = "FOR",
 }
 
 enum keywords {
@@ -49,6 +50,7 @@ enum keywords {
     if = TokenItem.IF,
     else = TokenItem.ELSE,
     return = TokenItem.RETURN,
+    for = TokenItem.FOR,
 }
 
 export function lookupIdent(ident: string): TokenType {

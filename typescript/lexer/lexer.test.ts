@@ -3,7 +3,8 @@ import { TokenItem } from "../token/token.js";
 import { Lexer } from "./Lexer.js";
 
 it("should correctly tokenize the input", () => {
-    const input = `let five = 5;
+    const input = `
+    let five = 5;
     let ten = 10;
 
     let add = fn(x, y) {
@@ -25,7 +26,8 @@ it("should correctly tokenize the input", () => {
     "foobar"
     "foo bar"
     [1, 2];
-    {"foo": "bar"}`;
+    {"foo": "bar"}
+    for (let i = 0; i < len(foo); i + 1){};`;
 
     const tests = [
         [TokenItem.LET, "let"],
@@ -114,6 +116,27 @@ it("should correctly tokenize the input", () => {
         [TokenItem.COLON, ":"],
         [TokenItem.STRING, "bar"],
         [TokenItem.RBRACE, "}"],
+        [TokenItem.FOR, "for"],
+        [TokenItem.LPAREN, "("],
+        [TokenItem.LET, "let"],
+        [TokenItem.IDENT, "i"],
+        [TokenItem.ASSIGN, "="],
+        [TokenItem.INT, "0"],
+        [TokenItem.SEMICOLON, ";"],
+        [TokenItem.IDENT, "i"],
+        [TokenItem.LT, "<"],
+        [TokenItem.IDENT, "len"],
+        [TokenItem.LPAREN, "("],
+        [TokenItem.IDENT, "foo"],
+        [TokenItem.RPAREN, ")"],
+        [TokenItem.SEMICOLON, ";"],
+        [TokenItem.IDENT, "i"],
+        [TokenItem.PLUS, "+"],
+        [TokenItem.INT, "1"],
+        [TokenItem.RPAREN, ")"],
+        [TokenItem.LBRACE, "{"],
+        [TokenItem.RBRACE, "}"],
+        [TokenItem.SEMICOLON, ";"],
         [TokenItem.EOF, ""],
     ];
 
