@@ -356,7 +356,6 @@ it("should call builtin functions", () => {
 
     for (const test of tests) {
         const evaluated = testEval(test.input);
-        console.log(evaluated);
 
         if (typeof test.expected === "number") {
             testIntegerObject(evaluated, test.expected);
