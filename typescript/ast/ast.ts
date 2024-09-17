@@ -267,6 +267,28 @@ export class IfExpression extends Expression {
     }
 }
 
+type ForStatementNode = {
+    token?: Token;
+    initialization?: Identifier;
+    condition?: Expression;
+    afterthought?: Expression;
+    body?: BlockStatement;
+};
+export class ForLiteral extends Expression {
+    public initialization?: Expression;
+    public condition?: Expression;
+    public afterthought?: Expression;
+    public body?: BlockStatement;
+
+    constructor(forStatementNode: ForStatementNode) {
+        super({ token: forStatementNode.token });
+        this.initialization = forStatementNode.initialization;
+        this.condition = forStatementNode.condition;
+        this.afterthought = forStatementNode.afterthought;
+        this.body = forStatementNode.body;
+    }
+}
+
 type BlockStatementNode = {
     token?: Token;
     statements?: Statement[];

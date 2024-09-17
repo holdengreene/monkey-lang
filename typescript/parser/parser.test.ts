@@ -5,6 +5,7 @@ import {
     CallExpression,
     type Expression,
     ExpressionStatement,
+    ForLiteral,
     FunctionLiteral,
     HashLiteral,
     Identifier,
@@ -326,6 +327,38 @@ it("should parse if else expressions", () => {
         throw new Error("alternative.expression is missing");
     }
     testIdentifier(alternative.expression, "y");
+});
+
+it("should parse for statements", () => {
+    const input = "for (i; i < 5; i + 1;) { i };";
+
+    const program = createProgram(input);
+    expect(program.statements).toHaveLength(1);
+
+    const stmt = program.statements[0] as ExpressionStatement;
+    expect(stmt).toBeInstanceOf(ExpressionStatement);
+
+    const forLoop = stmt.expression as ForLiteral;
+    expect(forLoop).toBeInstanceOf(ForLiteral);
+
+    if (!forLoop.initialization) {
+        throw new Error("forLoop.initialization is missing");
+    }
+    testIdentifier(forLoop.initialization, "i");
+
+    if (!forLoop.condition) {
+        throw new Error("forLoop.condition is missing");
+    }
+    testInfixExpression(forLoop.condition, 'i', "<", 5);
+
+    if (!forLoop.afterthought) {
+        throw new Error("forLoop.afterthought is missing");
+    }
+    testInfixExpression(forLoop.afterthought, 'i', "+", 1);
+
+    const forLoopBody = forLoop.body?.statements;
+    expect(forLoopBody).toHaveLength(1);
+    expect(forLoopBody?.[0]).toBeInstanceOf(ExpressionStatement);
 });
 
 it("should parse functional literals", () => {

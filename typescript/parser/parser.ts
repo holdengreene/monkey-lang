@@ -5,6 +5,7 @@ import {
     CallExpression,
     type Expression,
     ExpressionStatement,
+    ForLiteral,
     FunctionLiteral,
     HashLiteral,
     Identifier,
@@ -73,6 +74,7 @@ export class Parser {
         this.registerPrefix(TokenItem.STRING, this.parseStringLiteral);
         this.registerPrefix(TokenItem.LBRACKET, this.parseArrayLiteral);
         this.registerPrefix(TokenItem.LBRACE, this.parseHashLiteral);
+        this.registerPrefix(TokenItem.FOR, this.parseForLiteral);
 
         this.registerInfix(TokenItem.PLUS, this.parseInfixExpression);
         this.registerInfix(TokenItem.MINUS, this.parseInfixExpression);
@@ -457,6 +459,50 @@ export class Parser {
         }
 
         return exp;
+    };
+
+    private parseForLiteral = (): ForLiteral | undefined => {
+        const forLit = new ForLiteral({ token: this.curToken });
+
+        if (!this.expectPeek(TokenItem.LPAREN)) {
+            return undefined;
+        }
+
+        this.nextToken();
+
+        forLit.initialization = this.parseExpression(Operators.LOWEST);
+
+        if (!this.expectPeek(TokenItem.SEMICOLON)) {
+            return undefined;
+        }
+
+        this.nextToken();
+
+        forLit.condition = this.parseExpression(Operators.LOWEST);
+
+        if (!this.expectPeek(TokenItem.SEMICOLON)) {
+            return undefined;
+        }
+
+        this.nextToken();
+
+        forLit.afterthought = this.parseExpression(Operators.LOWEST);
+
+        if (!this.expectPeek(TokenItem.SEMICOLON)) {
+            return undefined;
+        }
+
+        if (!this.expectPeek(TokenItem.RPAREN)) {
+            return undefined;
+        }
+
+        if (!this.expectPeek(TokenItem.LBRACE)) {
+            return undefined;
+        }
+
+        forLit.body = this.parseBlockStatement();
+
+        return forLit;
     };
 
     private parseBlockStatement = (): BlockStatement => {
