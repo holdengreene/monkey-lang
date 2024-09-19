@@ -347,12 +347,47 @@ it("should parse for statements", () => {
     if (!forLoop.condition) {
         throw new Error("forLoop.condition is missing");
     }
-    testInfixExpression(forLoop.condition, 'i', "<", 5);
+    testInfixExpression(forLoop.condition, "i", "<", 5);
 
     if (!forLoop.afterthought) {
         throw new Error("forLoop.afterthought is missing");
     }
-    testInfixExpression(forLoop.afterthought, 'i', "+", 1);
+    testInfixExpression(forLoop.afterthought, "i", "+", 1);
+
+    const forLoopBody = forLoop.body?.statements;
+    expect(forLoopBody).toHaveLength(1);
+    expect(forLoopBody?.[0]).toBeInstanceOf(ExpressionStatement);
+});
+
+it("should parse more complex for statements", () => {
+    const input = "for (let i = 0; i < len(foo); i + 1;) { i };";
+
+    const program = createProgram(input);
+    expect(program.statements).toHaveLength(1);
+
+    const stmt = program.statements[0] as ExpressionStatement;
+    expect(stmt).toBeInstanceOf(ExpressionStatement);
+
+    const forLoop = stmt.expression as ForLiteral;
+    expect(forLoop).toBeInstanceOf(ForLiteral);
+
+    expect(forLoop.initialization).toBeInstanceOf(LetStatement);
+    testLetStatement(forLoop.initialization as LetStatement, "i");
+
+    if (!forLoop.initialization?.value) {
+        throw new Error("forLoop.initialization.value is missing");
+    }
+    testLiteralExpression(forLoop.initialization.value as Expression, 0);
+
+    if (!forLoop.condition) {
+        throw new Error("forLoop.condition is missing");
+    }
+    testInfixExpression(forLoop.condition, "i", "<", ["len", "foo"]);
+
+    if (!forLoop.afterthought) {
+        throw new Error("forLoop.afterthought is missing");
+    }
+    testInfixExpression(forLoop.afterthought, "i", "+", 1);
 
     const forLoopBody = forLoop.body?.statements;
     expect(forLoopBody).toHaveLength(1);
@@ -669,7 +704,7 @@ function testLetStatement(statement: LetStatement, name: string) {
     expect(statement.name?.tokenLiteral()).toBe(name);
 }
 
-function testLiteralExpression(exp: Expression, expected: any) {
+function testLiteralExpression(exp: Expression, expected: string | number | boolean | string[]) {
     switch (typeof expected) {
         case "string":
             return testIdentifier(exp, expected);
@@ -679,7 +714,26 @@ function testLiteralExpression(exp: Expression, expected: any) {
             return testBooleanLiteral(exp, expected);
     }
 
+    if (exp instanceof CallExpression) {
+        return testForCallExpression(exp, expected);
+    }
+
     throw new Error(`type of exp not handled. got=${typeof exp}`);
+}
+
+function testForCallExpression(exp: CallExpression, expected: string[]) {
+    if (!exp.function) {
+        throw new Error("exp.function is missing");
+    }
+    testIdentifier(exp.function, expected[0]);
+
+    expect(exp.arguments).toHaveLength(1);
+
+    if (!exp.arguments) {
+        throw new Error("exp.arguments is missing");
+    }
+
+    testLiteralExpression(exp.arguments[0], expected[1]);
 }
 
 function testIdentifier(exp: Expression, value: string) {
@@ -704,7 +758,7 @@ function testInfixExpression(
     exp: InfixExpression,
     left: number | boolean | string,
     operator: string,
-    right: number | boolean | string,
+    right: number | boolean | string | string[],
 ) {
     expect(exp).toBeInstanceOf(InfixExpression);
 
