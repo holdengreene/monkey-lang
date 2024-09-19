@@ -155,6 +155,12 @@ it("should evaluate return statements", () => {
     }
 });
 
+it.only("should evaluate for loops", () => {
+    const test = "for (let i = 0; i < 5; i + 1;) { i };"
+
+    const evaluated = testEval(test);
+})
+
 it("should handle errors", () => {
     const tests: { input: string; expectedMessage: string }[] = [
         {

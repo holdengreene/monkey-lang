@@ -13,6 +13,7 @@ export enum ObjectType {
     BUILTIN_OBJ = "BUILTIN",
     ARRAY_OBJ = "ARRAY",
     HASH_OBJ = "HASH",
+    FOR_OBJ = "FOR",
 }
 
 export interface MObject {
@@ -148,6 +149,23 @@ export class FunctionObj implements MObject {
         out.push(") {\n");
         out.push(this.body?.string() ?? "");
         out.push("\n");
+        return out.join("");
+    }
+}
+
+export class ForObj implements MObject {
+    constructor() {}
+
+    public type(): ObjectType {
+        return ObjectType.FOR_OBJ;
+    }
+
+    public inspect(): string {
+        const out: string[] = [];
+
+        out.push("(");
+        out.push(")");
+
         return out.join("");
     }
 }

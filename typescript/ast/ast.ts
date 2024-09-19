@@ -276,8 +276,8 @@ type ForStatementNode = {
 };
 export class ForLiteral extends Expression {
     public initialization?: ExpressionStatement | LetStatement;
-    public condition?: Expression;
-    public afterthought?: Expression;
+    public condition?: InfixExpression;
+    public afterthought?: InfixExpression;
     public body?: BlockStatement;
 
     constructor(forStatementNode: ForStatementNode) {

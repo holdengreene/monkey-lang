@@ -4,6 +4,7 @@ import {
     BooleanLiteral,
     CallExpression,
     ExpressionStatement,
+    ForLiteral,
     FunctionLiteral,
     HashLiteral,
     Identifier,
@@ -112,6 +113,9 @@ export function evaluator(
 
         case node instanceof IfExpression:
             return evalIfExpression(node, env);
+
+        case node instanceof ForLiteral:
+            return evalForLiteral(node, env);
 
         case node instanceof Identifier:
             return evalIdentifier(node, env);
@@ -234,11 +238,11 @@ function evalIntegerInfixExpression(
     const leftVal = left?.value;
     const rightVal = right?.value;
 
-    if (!leftVal) {
+    if (leftVal === null || leftVal === undefined) {
         return newError(`missing leftVal ${leftVal}`);
     }
 
-    if (!rightVal) {
+    if (rightVal === null || rightVal === undefined) {
         return newError(`missing rightVal ${rightVal}`);
     }
 
@@ -367,6 +371,41 @@ function evalIfExpression(
     } else {
         return NULL;
     }
+}
+
+function evalForLiteral(
+    forLit: ForLiteral,
+    env: Environment,
+): MObject | undefined {
+    // const initializer = evaluator(forLit.initialization!, env);
+    // if (isError(initializer)) {
+    //     return initializer;
+    // }
+
+    // const condition = evaluator(forLit.condition!, env);
+    // if (isError(condition)) {
+    //     return condition;
+    // }
+
+    // const afterthought = evaluator(forLit.afterthought!, env);
+    // if (isError(afterthought)) {
+    //     return afterthought;
+    // }
+
+    // const body = evaluator(forLit.body!, env);
+    // if (isError(body)) {
+    //     return body;
+    // }
+    const initialization = forLit.initialization
+    const condition = forLit.condition;
+    const afterthought = forLit.afterthought;
+    const body = forLit.body;
+
+    console.log(condition);
+    console.log(afterthought);
+    console.log(body);
+
+    return evaluator(forLit.condition!, env);
 }
 
 function evalIdentifier(node: Identifier, env: Environment): MObject {
