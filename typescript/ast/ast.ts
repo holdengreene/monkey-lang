@@ -287,6 +287,20 @@ export class ForLiteral extends Expression {
         this.afterthought = forStatementNode.afterthought;
         this.body = forStatementNode.body;
     }
+
+    public string(): string {
+        const out: string[] = [];
+
+        out.push("(");
+        out.push(this.tokenLiteral() + " ");
+        out.push(this.initialization?.string() ?? "");
+        out.push(this.condition?.string() ?? "");
+        out.push(this.afterthought?.string() ?? "");
+        out.push(this.body?.string() ?? "");
+        out.push(")");
+
+        return out.join("");
+    }
 }
 
 type BlockStatementNode = {
